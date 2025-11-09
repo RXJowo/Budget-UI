@@ -9,6 +9,8 @@ import appRoutes from './app/app.routes';
 import { registerLocaleData } from '@angular/common';
 import { PageTitleStrategy } from './app/shared/service/page-title-strategy.service';
 import AppComponent from './app/app.component';
+import { IonicModule } from '@ionic/angular';
+
 
 if (environment.production) enableProdMode();
 
