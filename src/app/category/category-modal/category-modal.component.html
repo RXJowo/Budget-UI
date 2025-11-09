@@ -12,11 +12,13 @@
     </ion-buttons>
 
     <!-- Title -->
-    <ion-title>Add category</ion-title>
+    <ion-title>{{ isEditMode ? 'Edit category' : 'Add category' }}</ion-title>
 
     <!-- Save Button -->
     <ion-buttons slot="end">
-      <ion-button (click)="save()">
+      <ion-button 
+        [disabled]="categoryForm.pristine || categoryForm.invalid" 
+        (click)="save()">
         <ion-icon slot="start" name="save" />
         Save
       </ion-button>
@@ -27,17 +29,41 @@
 <!-- ------- -->
 <!-- Content -->
 <!-- ------- -->
-<ion-content class="ion-padding">
+<ion-content class="ion-padding" [formGroup]="categoryForm">
   <!-- Input -->
   <ion-item>
     <ion-icon name="text" slot="start" />
-    <ion-input maxlength="40" placeholder="Name" required="true" />
+    <ion-input 
+      #nameInput
+      formControlName="name" 
+      maxlength="40" 
+      placeholder="Name" 
+      required="true"
+      [clearInput]="true"
+    />
   </ion-item>
 
-  <!-- Delete Button -->
-  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-    <ion-fab-button color="danger" (click)="delete()">
-      <ion-icon name="trash" />
-    </ion-fab-button>
-  </ion-fab>
+  <!-- Fehlermeldung -->
+  @if (categoryForm.get('name')?.touched && categoryForm.get('name')?.invalid) {
+    <div style="color: var(--ion-color-danger); padding: 8px 16px; font-size: 14px;">
+      @if (categoryForm.get('name')?.hasError('required')) {
+        Name is required
+      }
+      @if (categoryForm.get('name')?.hasError('maxlength')) {
+        Name must be less than 40 characters
+      }
+    </div>
+  }
+
+  <!-- Delete Button - nur im Edit-Modus -->
+  @if (isEditMode) {
+    <ion-button 
+      expand="block" 
+      color="danger" 
+      (click)="delete()"
+      style="margin-top: 20px;">
+      <ion-icon slot="start" name="trash" />
+      Delete Category
+    </ion-button>
+  }
 </ion-content>

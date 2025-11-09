@@ -1,10 +1,11 @@
 {
   "/api": {
     "target": "https://budget-service.onrender.com",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "debug",
     "pathRewrite": {
       "^/api": ""
-    },
-    "changeOrigin": true,
-    "secure": false
+    }
   }
 }

@@ -1,12 +1,16 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ModalController } from '@ionic/angular/standalone';
 import { ReactiveFormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { add, alertCircleOutline, search, swapVertical } from 'ionicons/icons';
 import CategoryModalComponent from '../category-modal/category-modal.component';
-import { Category } from '../category.model';
+import { AllCategoryCriteria, Category, SortOption } from '../../shared/domain';
+import { CategoryService } from '../category.service';
+import { LoadingIndicatorService } from '../../shared/service/loading-indicator.service';
+import { ToastService } from '../../shared/service/toast.service';
+import { finalize } from 'rxjs';
 
-// ALLE Ionic Imports hinzufügen
+// Ionic Imports
 import {
   IonHeader,
   IonToolbar,
@@ -28,14 +32,11 @@ import {
   IonFabButton
 } from '@ionic/angular/standalone';
 
-type SortOption = 'name-asc' | 'name-desc' | 'created-newest' | 'created-oldest';
-
 @Component({
   selector: 'app-category-list',
   templateUrl: './category-list.component.html',
   standalone: true,
   imports: [
-    // Alle Ionic Komponenten hier eintragen
     IonHeader,
     IonToolbar,
     IonButtons,
@@ -57,65 +58,83 @@ type SortOption = 'name-asc' | 'name-desc' | 'created-newest' | 'created-oldest'
     ReactiveFormsModule
   ]
 })
-export default class CategoryListComponent {
+export default class CategoryListComponent implements OnInit {
   // DI
+  private readonly categoryService = inject(CategoryService);
+  private readonly loadingIndicatorService = inject(LoadingIndicatorService);
   private readonly modalCtrl = inject(ModalController);
+  private readonly toastService = inject(ToastService);
 
   // State
-  categories = signal<Category[]>([
-    { id: '1', name: 'Auswärts Essen', createdAt: new Date('2024-01-15') },
-    { id: '2', name: 'Ferien', createdAt: new Date('2024-01-10') },
-    { id: '3', name: 'Sport', createdAt: new Date('2024-01-20') },
-    { id: '4', name: 'Einkaufen', createdAt: new Date('2024-01-12') },
-    { id: '5', name: 'Transport', createdAt: new Date('2024-01-18') }
-  ]);
-
+  categories = signal<Category[]>([]);
   searchTerm = signal<string>('');
-  sortOption = signal<SortOption>('name-asc');
+  selectedSort = signal<string>('name,asc');
 
-  // Computed
+  // Sort Options
+  readonly sortOptions: SortOption[] = [
+    { label: 'Name (A-Z)', value: 'name,asc' },
+    { label: 'Name (Z-A)', value: 'name,desc' },
+    { label: 'Created at (newest first)', value: 'createdAt,desc' },
+    { label: 'Created at (oldest first)', value: 'createdAt,asc' }
+  ];
+
+  // Computed - gefilterte Kategorien
   filteredCategories = (): Category[] => {
-    let result = [...this.categories()];
-
-    // Suche
     const search = this.searchTerm().toLowerCase();
-    if (search) {
-      result = result.filter(cat => 
-        cat.name.toLowerCase().includes(search)
-      );
+    if (!search) {
+      return this.categories();
     }
-
-    // Sortierung
-    const sort = this.sortOption();
-    switch (sort) {
-      case 'name-asc':
-        result.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'name-desc':
-        result.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-      case 'created-newest':
-        result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        break;
-      case 'created-oldest':
-        result.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-        break;
-    }
-
-    return result;
+    return this.categories().filter(cat => 
+      cat.name.toLowerCase().includes(search)
+    );
   };
 
   constructor() {
     addIcons({ swapVertical, search, alertCircleOutline, add });
   }
 
+  ngOnInit(): void {
+    this.loadCategories();
+  }
+
+  // Data Loading
+  loadCategories(): void {
+  this.loadingIndicatorService
+    .showLoadingIndicator({ message: 'Loading categories' })
+    .subscribe(loadingIndicator => {
+      const criteria: AllCategoryCriteria = {
+        sort: this.selectedSort()
+      };
+      
+      // Nur wenn searchTerm nicht leer ist
+      if (this.searchTerm()) {
+        criteria.name = this.searchTerm();
+      }
+
+      this.categoryService
+        .getAllCategories(criteria)
+        .pipe(finalize(() => loadingIndicator.dismiss()))
+        .subscribe({
+          next: categories => {
+            this.categories.set(categories);
+          },
+          error: error => {
+            this.toastService.displayWarningToast('Could not load categories', error);
+          }
+        });
+    });
+}
+
   // Actions
   onSearchChange(event: any): void {
     this.searchTerm.set(event.target.value || '');
+    // Optional: Automatisch neu laden bei Suche
+    // this.loadCategories();
   }
 
   onSortChange(event: any): void {
-    this.sortOption.set(event.target.value);
+    this.selectedSort.set(event.target.value);
+    this.loadCategories();
   }
 
   async openModal(category?: Category): Promise<void> {
@@ -125,35 +144,11 @@ export default class CategoryListComponent {
     });
     
     modal.present();
-    const { data, role } = await modal.onWillDismiss();
+    const { role } = await modal.onWillDismiss();
 
-    if (role === 'save' && data) {
-      if (category) {
-        this.updateCategory(data);
-      } else {
-        this.addCategory(data);
-      }
-    } else if (role === 'delete' && category) {
-      this.deleteCategory(category.id);
+    // Bei save oder delete: Liste neu laden
+    if (role === 'refresh') {
+      this.loadCategories();
     }
-  }
-
-  private addCategory(name: string): void {
-    const newCategory: Category = {
-      id: Date.now().toString(),
-      name,
-      createdAt: new Date()
-    };
-    this.categories.update(cats => [...cats, newCategory]);
-  }
-
-  private updateCategory(updatedCategory: Category): void {
-    this.categories.update(cats => 
-      cats.map(cat => cat.id === updatedCategory.id ? updatedCategory : cat)
-    );
-  }
-
-  private deleteCategory(id: string): void {
-    this.categories.update(cats => cats.filter(cat => cat.id !== id));
   }
 }
