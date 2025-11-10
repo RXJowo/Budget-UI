@@ -12,7 +12,7 @@
     </ion-buttons>
 
     <!-- Title -->
-    <ion-title>{{ isEditMode ? 'Edit category' : 'Add category' }}</ion-title>
+    <ion-title>{{ category.id ? 'Edit' : 'Add' }} category</ion-title>
 
     <!-- Save Button -->
     <ion-buttons slot="end">
@@ -56,14 +56,11 @@
   }
 
   <!-- Delete Button - nur im Edit-Modus -->
-  @if (isEditMode) {
-    <ion-button 
-      expand="block" 
-      color="danger" 
-      (click)="delete()"
-      style="margin-top: 20px;">
-      <ion-icon slot="start" name="trash" />
-      Delete Category
-    </ion-button>
+  @if (category.id) {
+    <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+      <ion-fab-button color="danger" (click)="delete()">
+        <ion-icon name="trash" />
+      </ion-fab-button>
+    </ion-fab>
   }
 </ion-content>

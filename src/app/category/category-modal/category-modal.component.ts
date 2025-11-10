@@ -1,4 +1,4 @@
-import { Component, inject, Input, ViewChild } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ModalController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -7,8 +7,9 @@ import { Category, CategoryUpsertDto } from '../../shared/domain';
 import { CategoryService } from '../category.service';
 import { ToastService } from '../../shared/service/toast.service';
 import { LoadingIndicatorService } from '../../shared/service/loading-indicator.service';
-import { finalize } from 'rxjs';
-import { ViewDidEnter } from '@ionic/angular';
+import { ActionSheetService } from '../../shared/service/action-sheet.service';
+import { finalize, mergeMap } from 'rxjs';
+import { ViewDidEnter, ViewWillEnter } from '@ionic/angular';
 import { IonInput } from '@ionic/angular/standalone';
 
 // Ionic Imports
@@ -21,6 +22,8 @@ import {
   IonTitle,
   IonContent,
   IonItem,
+  IonFab,
+  IonFabButton
 } from '@ionic/angular/standalone';
 
 @Component({
@@ -37,42 +40,41 @@ import {
     IonContent,
     IonItem,
     IonInput,
+    IonFab,
+    IonFabButton,
     ReactiveFormsModule
   ]
 })
-export default class CategoryModalComponent implements ViewDidEnter {
+export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnter {
   // DI
+  private readonly actionSheetService = inject(ActionSheetService);
   private readonly categoryService = inject(CategoryService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly loadingIndicatorService = inject(LoadingIndicatorService);
   private readonly modalCtrl = inject(ModalController);
   private readonly toastService = inject(ToastService);
 
-  // Input
-  @Input() category?: Category;
+  // Passed into the component by the ModalController
+  category: Category = {} as Category;
 
   // ViewChild
   @ViewChild('nameInput') nameInput?: IonInput;
 
   // Form
   readonly categoryForm = this.formBuilder.group({
-  id: [undefined as string | undefined],
-  name: ['', [Validators.required, Validators.maxLength(40)]]
-});
+    id: [undefined as string | undefined],
+    name: ['', [Validators.required, Validators.maxLength(40)]]
+  });
 
   constructor() {
     addIcons({ close, save, text, trash });
   }
 
+  ionViewWillEnter(): void {
+    this.categoryForm.patchValue(this.category);
+  }
+
   ionViewDidEnter(): void {
-    if (this.category) {
-      // Edit Mode: Form mit Daten füllen
-      this.categoryForm.patchValue({
-        id: this.category.id,
-        name: this.category.name
-      });
-    }
-    // Input fokussieren
     this.nameInput?.setFocus();
   }
 
@@ -100,13 +102,12 @@ export default class CategoryModalComponent implements ViewDidEnter {
   }
 
   delete(): void {
-    if (!this.category?.id) return;
-
-    this.loadingIndicatorService
-      .showLoadingIndicator({ message: 'Deleting category' })
+    this.actionSheetService
+      .showDeletionConfirmation('Are you sure you want to delete this category?')
+      .pipe(mergeMap(() => this.loadingIndicatorService.showLoadingIndicator({ message: 'Deleting category' })))
       .subscribe(loadingIndicator => {
         this.categoryService
-          .deleteCategory(this.category!.id!)
+          .deleteCategory(this.category.id!)
           .pipe(finalize(() => loadingIndicator.dismiss()))
           .subscribe({
             next: () => {
@@ -116,10 +117,5 @@ export default class CategoryModalComponent implements ViewDidEnter {
             error: error => this.toastService.displayWarningToast('Could not delete category', error)
           });
       });
-  }
-
-  // Getter
-  get isEditMode(): boolean {
-    return !!this.category;
   }
 }
