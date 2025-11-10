@@ -8,63 +8,63 @@
     </ion-buttons>
     <ion-title>Categories</ion-title>
   </ion-toolbar>
+  <ion-toolbar>
+    @if (loading) {
+      <ion-progress-bar type="indeterminate" />
+    }
+  </ion-toolbar>
 </ion-header>
 
 <!-- ------- -->
 <!-- Content -->
 <!-- ------- -->
 <ion-content>
-  <ion-grid class="ion-padding">
-    <!-- Search & Sort -->
-    <ion-row>
-      <ion-col size="12" size-sm="6">
-        <ion-item>
-          <ion-icon name="swap-vertical" slot="start"/>
-          <ion-select 
-            interface="popover" 
-            [value]="selectedSort()"
-            (ionChange)="onSortChange($event)">
-            @for (option of sortOptions; track option.value) {
-              <ion-select-option [value]="option.value">
-                {{ option.label }}
-              </ion-select-option>
-            }
-          </ion-select>
-        </ion-item>
-      </ion-col>
-      <ion-col size="12" size-sm="6">
-        <ion-item>
-          <ion-icon name="search" slot="start"/>
-          <ion-input 
-            maxlength="40" 
-            placeholder="Search" 
-            [clearInput]="true"
-            [value]="searchTerm()"
-            (ionInput)="onSearchChange($event)"
-          />
-        </ion-item>
-      </ion-col>
-    </ion-row>
+  <!-- Refresher -->
+  <ion-refresher slot="fixed" [disabled]="loading" (ionRefresh)="reloadCategories($event)">
+    <ion-refresher-content />
+  </ion-refresher>
 
+  <ion-grid class="ion-padding">
     <!-- Category List -->
     <ion-row>
       <ion-col>
-        <ion-list>
-          @for (category of filteredCategories(); track category.id) {
-            <ion-item button="true" [detail]="true" (click)="openModal(category)">
-              <ion-label>{{ category.name }}</ion-label>
-            </ion-item>
-          } @empty {
+        @switch (categories?.length) {
+          <!-- Skeleton -->
+          @case (null) {
+            @for (i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; track i) {
+              <ion-item>
+                <ion-label>
+                  <ion-skeleton-text style="width: 80px" [animated]="true" />
+                </ion-label>
+              </ion-item>
+            }
+          }
+
+          <!-- Empty List -->
+          @case (0) {
             <ion-item>
-              <ion-label color="medium">
-                <p>No categories found</p>
-              </ion-label>
+              <ion-icon slot="start" name="alert-circle-outline" />
+              <ion-label> No categories found </ion-label>
             </ion-item>
           }
-        </ion-list>
+
+          <!-- Categories -->
+          @default {
+            @for (category of categories; track category.id) {
+              <ion-item button="true" [detail]="true" (click)="openModal(category)">
+                <ion-label> {{ category.name }} </ion-label>
+              </ion-item>
+            }
+          }
+        }
       </ion-col>
     </ion-row>
   </ion-grid>
+
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll [disabled]="lastPageReached" (ionInfinite)="loadNextCategoryPage($event)">
+    <ion-infinite-scroll-content />
+  </ion-infinite-scroll>
 
   <!-- Create Button -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end">
