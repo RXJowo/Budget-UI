@@ -1,1 +1,88 @@
-Expense Modal
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancel()">
+        <ion-icon name="close-outline" slot="start"></ion-icon>
+        CANCEL
+      </ion-button>
+    </ion-buttons>
+
+    <ion-title>
+      {{ isEditMode() ? 'Edit Expense' : 'Create Expense' }}
+    </ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button (click)="save()" [disabled]="expenseForm.invalid">
+        <ion-icon name="save-outline" slot="start"></ion-icon>
+        SAVE
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <form [formGroup]="expenseForm">
+    <ion-item>
+      <ion-icon name="text-outline" slot="start" color="medium"></ion-icon>
+      <ion-input
+        label="Beschreibung"
+        labelPlacement="floating"
+        placeholder="z.B. Mittagessen"
+        formControlName="description"
+        maxlength="40"
+        [clearInput]="true"
+        errorText="Beschreibung ist ein Pflichtfeld"
+      ></ion-input>
+    </ion-item>
+
+    <ion-item>
+      <ion-icon name="pricetag-outline" slot="start" color="medium"></ion-icon>
+      <ion-select
+        label="Kategorie"
+        labelPlacement="floating"
+        formControlName="categoryId"
+        placeholder="Kategorie wählen"
+        errorText="Kategorie ist ein Pflichtfeld"
+      >
+        <ion-select-option
+          *ngFor="let cat of mockCategories"
+          [value]="cat.id"
+        >
+          {{ cat.name }}
+        </ion-select-option> </ion-select>
+    </ion-item>
+
+    <ion-item>
+      <ion-icon name="cash-outline" slot="start" color="medium"></ion-icon>
+      <ion-input
+        label="Betrag"
+        labelPlacement="floating"
+        type="number"
+        placeholder="z.B. 25.50"
+        formControlName="amount"
+        errorText="Betrag muss > 0 sein"
+      ></ion-input>
+      <ion-text slot="end" color="medium">CHF</ion-text>
+    </ion-item>
+
+    <ion-item>
+      <ion-icon name="calendar-outline" slot="start" color="medium"></ion-icon>
+      <ion-datetime
+        label="Datum"
+        presentation="date"
+        formControlName="bookingDate"
+      ></ion-datetime>
+    </ion-item>
+  </form>
+
+  <ion-fab
+    *ngIf="isEditMode()"
+    slot="fixed"
+    vertical="bottom"
+    horizontal="end"
+  >
+    <ion-fab-button color="danger" (click)="delete()">
+      <ion-icon name="trash-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

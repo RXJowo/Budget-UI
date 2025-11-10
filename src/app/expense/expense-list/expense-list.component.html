@@ -1,1 +1,68 @@
-Expense List
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button />
+    </ion-buttons>
+    <ion-title>Expenses</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    @for (expense of expenses; track expense.id) {
+    <ion-item button="true" [detail]="true" (click)="openModal(expense)">
+      <ion-label>
+        <h2>{{ expense.description }}</h2>
+        <p>
+          {{ expense.category.name }} ·
+          {{ expense.bookingDate | date : 'dd.MM.yyyy' }}
+        </p>
+      </ion-label>
+      <ion-note slot="end" color="primary">
+        {{ expense.amount | number : '1.2-2' }} CHF
+      </ion-note>
+    </ion-item>
+    } @empty {
+    <ion-item>
+      <ion-label color="medium">
+        <p>No expenses found</p>
+      </ion-label>
+    </ion-item>
+    }
+  </ion-list>
+
+  <ion-item lines="none">
+    <ion-label>
+      <h2><strong>Total</strong></h2>
+    </ion-label>
+    <ion-note slot="end" color="primary">
+      <strong>{{ getTotalAmount() | number : '1.2-2' }} CHF</strong>
+    </ion-note>
+  </ion-item>
+
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="openModal()">
+      <ion-icon name="add" />
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="previousMonth()">
+        <ion-icon slot="icon-only" name="chevron-back" />
+      </ion-button>
+    </ion-buttons>
+
+    <ion-title class="ion-text-center">
+      {{ date | date : 'MMMM yyyy' }}
+    </ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button (click)="nextMonth()">
+        <ion-icon slot="icon-only" name="chevron-forward" />
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-footer>
