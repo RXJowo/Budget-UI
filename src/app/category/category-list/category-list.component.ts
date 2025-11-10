@@ -1,13 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { ModalController } from '@ionic/angular/standalone';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { add, alertCircleOutline, search, swapVertical } from 'ionicons/icons';
 import CategoryModalComponent from '../category-modal/category-modal.component';
-import { Category, CategoryCriteria } from '../../shared/domain';
+import { Category, CategoryCriteria, SortOption } from '../../shared/domain';
 import { CategoryService } from '../category.service';
 import { ToastService } from '../../shared/service/toast.service';
-import { finalize } from 'rxjs';
-import { ViewDidEnter } from '@ionic/angular';
+import { debounce, finalize, interval, Subscription } from 'rxjs';
+import { ViewDidEnter, ViewDidLeave } from '@ionic/angular';
 import { InfiniteScrollCustomEvent, RefresherCustomEvent } from '@ionic/angular';
 
 // Ionic Imports
@@ -26,7 +27,6 @@ import {
   IonSelect,
   IonSelectOption,
   IonInput,
-  IonList,
   IonLabel,
   IonFab,
   IonFabButton,
@@ -57,7 +57,6 @@ import {
     IonSelect,
     IonSelectOption,
     IonInput,
-    IonList,
     IonLabel,
     IonFab,
     IonFabButton,
@@ -66,12 +65,14 @@ import {
     IonInfiniteScroll,
     IonInfiniteScrollContent,
     IonRefresher,
-    IonRefresherContent
+    IonRefresherContent,
+    ReactiveFormsModule
   ]
 })
-export default class CategoryListComponent implements ViewDidEnter {
+export default class CategoryListComponent implements ViewDidEnter, ViewDidLeave {
   // DI
   private readonly categoryService = inject(CategoryService);
+  private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly modalCtrl = inject(ModalController);
   private readonly toastService = inject(ToastService);
 
@@ -86,6 +87,19 @@ export default class CategoryListComponent implements ViewDidEnter {
     sort: this.initialSort 
   };
 
+  // Search & Sort
+  private searchFormSubscription?: Subscription;
+  readonly sortOptions: SortOption[] = [
+    { label: 'Created at (newest first)', value: 'createdAt,desc' },
+    { label: 'Created at (oldest first)', value: 'createdAt,asc' },
+    { label: 'Name (A-Z)', value: 'name,asc' },
+    { label: 'Name (Z-A)', value: 'name,desc' }
+  ];
+  readonly searchForm = this.formBuilder.group({ 
+    name: [''], 
+    sort: [this.initialSort] 
+  });
+
   constructor() {
     addIcons({ swapVertical, search, alertCircleOutline, add });
   }
@@ -93,6 +107,18 @@ export default class CategoryListComponent implements ViewDidEnter {
   // Lifecycle
   ionViewDidEnter(): void {
     this.loadCategories();
+
+    this.searchFormSubscription = this.searchForm.valueChanges
+      .pipe(debounce(searchParams => interval(searchParams.name?.length ? 400 : 0)))
+      .subscribe(searchParams => {
+        this.searchCriteria = { ...this.searchCriteria, ...searchParams, page: 0 };
+        this.loadCategories();
+      });
+  }
+
+  ionViewDidLeave(): void {
+    this.searchFormSubscription?.unsubscribe();
+    this.searchFormSubscription = undefined;
   }
 
   // Data Loading
