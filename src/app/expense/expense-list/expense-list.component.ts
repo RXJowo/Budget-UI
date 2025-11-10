@@ -1,180 +1,155 @@
-import { Component } from '@angular/core';
-import { DatePipe, DecimalPipe } from '@angular/common';
-import { addIcons } from 'ionicons';
-import { add, chevronBack, chevronForward, calendar } from 'ionicons/icons';
-import { Expense } from '../../shared/domain';
-import { addMonths, startOfMonth } from 'date-fns';
-
-// Ionic Imports
+import { Component, signal, computed } from '@angular/core';
 import {
-  IonHeader,
-  IonToolbar,
-  IonButtons,
-  IonMenuButton,
-  IonTitle,
-  IonButton,
-  IonIcon,
-  IonContent,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonNote,
-  IonFab,
-  IonFabButton,
-  IonFooter,
-  ModalController, // Import für Modalfenster
+  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
+  IonContent, IonList, IonItem, IonLabel, IonNote, IonBadge,
+  IonFooter, IonChip, IonSearchbar, IonSelect, IonSelectOption, IonFab, IonFabButton
 } from '@ionic/angular/standalone';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { addIcons } from 'ionicons';
+import {
+  chevronBackOutline, chevronForwardOutline, addOutline, pricetagOutline,
+  funnelOutline, searchOutline, statsChartOutline, chevronForward
+} from 'ionicons/icons';
 
-// Das Modal, das wir öffnen wollen
-import ExpenseModalComponent from '../expense-modal/expense-modal.component';
+type Expense = {
+  id: string;
+  title: string;
+  category: string;
+  date: Date;
+  amount: number;
+  note?: string;
+};
+
+type SortKey = 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc';
 
 @Component({
+  standalone: true,
   selector: 'app-expense-list',
   templateUrl: './expense-list.component.html',
-  standalone: true,
-  imports: [
-    IonHeader,
-    IonToolbar,
-    IonButtons,
-    IonMenuButton,
-    IonTitle,
-    IonButton,
-    IonIcon,
-    IonContent,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonNote,
-    IonFab,
-    IonFabButton,
-    IonFooter,
-    DatePipe,
-    DecimalPipe,
-  ],
-})
-export default class ExpenseListComponent {
-  // Aktueller Monat für die Anzeige
-  date = startOfMonth(new Date());
+  styles: [`
+    /* Allgemeine Styles */
+    ion-badge { padding: 6px 10px; }
 
-  // Statische Testdaten
-  expenses: Expense[] = [
-    {
-      id: '1',
-      createdAt: '2024-01-15T10:00:00',
-      lastModifiedAt: '2024-01-15T10:00:00',
-      bookingDate: '2024-01-15',
-      amount: 45.5,
-      description: 'Restaurant Lunch',
-      category: {
-        id: '1',
-        name: 'Auswärts Essen',
-        createdAt: '',
-        lastModifiedAt: '',
-      },
-    },
-    {
-      id: '2',
-      createdAt: '2024-01-16T14:30:00',
-      lastModifiedAt: '2024-01-16T14:30:00',
-      bookingDate: '2024-01-16',
-      amount: 89.99,
-      description: 'Sportkurs Mitgliedschaft',
-      category: {
-        id: '3',
-        name: 'Sport',
-        createdAt: '',
-        lastModifiedAt: '',
-      },
-    },
-    {
-      id: '3',
-      createdAt: '2024-01-18T09:15:00',
-      lastModifiedAt: '2024-01-18T09:15:00',
-      bookingDate: '2024-01-18',
-      amount: 120.0,
-      description: 'Tanken',
-      category: {
-        id: '5',
-        name: 'Transport',
-        createdAt: '',
-        lastModifiedAt: '',
-      },
-    },
-    {
-      id: '4',
-      createdAt: '2024-01-20T19:45:00',
-      lastModifiedAt: '2024-01-20T19:45:00',
-      bookingDate: '2024-01-20',
-      amount: 32.5,
-      description: 'Pizza Abend',
-      category: {
-        id: '1',
-        name: 'Auswärts Essen',
-        createdAt: '',
-        lastModifiedAt: '',
-      },
-    },
-    {
-      id: '5',
-      createdAt: '2024-01-22T11:00:00',
-      lastModifiedAt: '2024-01-22T11:00:00',
-      bookingDate: '2024-01-22',
-      amount: 250.0,
-      description: 'Wocheneinkauf',
-      category: {
-        id: '4',
-        name: 'Einkaufen',
-        createdAt: '',
-        lastModifiedAt: '',
-      },
-    },
+    /* Filter-Toolbar mit Linie unten */
+    .filters-toolbar {
+      --background: var(--ion-color-step-100, #1f1f1f);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* Footer mit zentriertem Datum */
+    .bottom-toolbar {
+      --background: var(--ion-color-step-100, #1f1f1f);
+      position: relative;
+      border-top: 1px solid rgba(255,255,255,0.10);
+      min-height: 56px;
+    }
+    .footer-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      pointer-events: none;
+    }
+
+    /* Layout der Filter */
+    .toolbar-controls {
+      gap: 12px;
+      display: grid;
+      grid-template-columns: 240px 220px 1fr;
+      align-items: center;
+    }
+
+    /* Divider & Betrags-Layout */
+    .day-divider { --background: rgba(255,255,255,0.04); }
+    .amount { font-variant-numeric: tabular-nums; }
+  `],
+  imports: [
+    CommonModule, CurrencyPipe, DatePipe,
+    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon,
+    IonContent, IonList, IonItem, IonLabel, IonNote, IonBadge,
+    IonFooter, IonChip, IonSearchbar, IonSelect, IonSelectOption, IonFab, IonFabButton
+  ]
+})
+export class ExpenseListComponent {
+  date = new Date();
+
+  private allExpenses: Expense[] = [
+    { id: 'e1', title: 'Test',         category: 'General',     date: new Date('2025-11-08T10:21:00'), amount: 2233.00 },
+    { id: 'e2', title: 'Coop Einkauf', category: 'Groceries',   date: new Date('2025-11-07T18:15:00'), amount: 24.90, note: 'Snacks' },
+    { id: 'e3', title: 'ZVV Ticket',   category: 'Transport',   date: new Date('2025-11-07T08:02:00'), amount: 8.40 },
+    { id: 'e4', title: 'Netflix',      category: 'Entertainment',date: new Date('2025-11-05T20:00:00'), amount: 18.90 },
   ];
 
-  // Den ModalController über DI verfügbar machen
-  constructor(private readonly modalCtrl: ModalController) {
-    addIcons({ add, chevronBack, chevronForward, calendar });
-  }
+  sortKey = signal<SortKey>('date-desc');
+  category = signal<string | 'all'>('all');
+  query = signal('');
 
-  // Aktionen
-  previousMonth(): void {
-    this.date = addMonths(this.date, -1);
-  }
-
-  nextMonth(): void {
-    this.date = addMonths(this.date, 1);
-  }
-
-  async openModal(expense?: Expense): Promise<void> {
-    const modal = await this.modalCtrl.create({
-      component: ExpenseModalComponent,
-      componentProps: {
-        expense: expense, // Übergibt die Daten (oder undefined für "Create")
-      },
+  constructor() {
+    addIcons({
+      chevronBackOutline, chevronForwardOutline, addOutline, pricetagOutline,
+      funnelOutline, searchOutline, statsChartOutline, chevronForward
     });
-    await modal.present();
-
-    // Warten, bis das Modal geschlossen wird
-    const { data, role } = await modal.onWillDismiss<Expense>();
-
-    if (role === 'save') {
-      if (expense) {
-        // EDIT-Modus: Finde und ersetze die Expense im Array
-        this.expenses = this.expenses.map((e) =>
-          e.id === expense.id ? data! : e
-        );
-      } else {
-        // CREATE-Modus: Füge die neue Expense hinzu (mit Mock-ID)
-        const newExpense = { ...data!, id: Date.now().toString() };
-        this.expenses = [...this.expenses, newExpense];
-      }
-    } else if (role === 'delete') {
-      // DELETE-Modus: Entferne die Expense aus dem Array
-      this.expenses = this.expenses.filter((e) => e.id !== expense!.id);
-    }
   }
 
-  // Helfer
-  getTotalAmount(): number {
-    return this.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  addMonths(delta: number): void {
+    const d = new Date(this.date);
+    d.setMonth(d.getMonth() + delta);
+    d.setDate(1);
+    this.date = d;
+  }
+
+  private monthItems = computed(() => {
+    const y = this.date.getFullYear();
+    const m = this.date.getMonth();
+    return this.allExpenses.filter(e => e.date.getFullYear() === y && e.date.getMonth() === m);
+  });
+
+  private filteredSorted = computed(() => {
+    let rows = this.monthItems();
+    const cat = this.category();
+    const q = this.query().toLowerCase().trim();
+
+    if (cat !== 'all') rows = rows.filter(r => r.category === cat);
+    if (q) rows = rows.filter(r =>
+      r.title.toLowerCase().includes(q) ||
+      r.category.toLowerCase().includes(q) ||
+      (r.note ?? '').toLowerCase().includes(q)
+    );
+
+    const key = this.sortKey();
+    rows = [...rows].sort((a, b) => {
+      switch (key) {
+        case 'date-desc':   return b.date.getTime() - a.date.getTime();
+        case 'date-asc':    return a.date.getTime() - b.date.getTime();
+        case 'amount-desc': return b.amount - a.amount;
+        case 'amount-asc':  return a.amount - b.amount;
+      }
+    });
+    return rows;
+  });
+
+  groupedByDay = computed(() => {
+    const byKey = new Map<string, Expense[]>();
+    for (const e of this.filteredSorted()) {
+      const k = new Intl.DateTimeFormat('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(e.date);
+      if (!byKey.has(k)) byKey.set(k, []);
+      byKey.get(k)!.push(e);
+    }
+    return Array.from(byKey.entries())
+      .sort(([a], [b]) => {
+        const [da, ma, ya] = a.split('.').map(Number);
+        const [db, mb, yb] = b.split('.').map(Number);
+        return new Date(yb!, mb!-1, db!).getTime() - new Date(ya!, ma!-1, da!).getTime();
+      })
+      .map(([dayLabel, items]) => ({ dayLabel, items }));
+  });
+
+  monthTotal(): number {
+    return this.filteredSorted().reduce((s, e) => s + e.amount, 0);
+  }
+
+  categories(): string[] {
+    return Array.from(new Set(this.allExpenses.map(e => e.category))).sort();
   }
 }
