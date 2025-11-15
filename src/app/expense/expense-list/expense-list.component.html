@@ -1,8 +1,11 @@
 <ion-header>
   <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button>
+    </ion-buttons>
     <ion-title>Expenses</ion-title>
     <ion-buttons slot="end">
-      <ion-badge>{{ monthTotal() | currency:'CHF':'symbol':'1.2-2' }}</ion-badge>
+      <ion-badge color="success">{{ monthTotal | currency:'CHF':'symbol':'1.2-2' }}</ion-badge>
     </ion-buttons>
   </ion-toolbar>
 
@@ -10,96 +13,183 @@
   <ion-toolbar class="filters-toolbar">
     <div class="toolbar-controls">
       <!-- Sort -->
-      <ion-select
-        interface="popover"
-        [value]="sortKey()"
-        (ionChange)="sortKey.set($event.detail.value)"
-      >
-        <ion-icon slot="start" name="stats-chart-outline"></ion-icon>
-        <ion-select-option value="date-desc">Date (newest first)</ion-select-option>
-        <ion-select-option value="date-asc">Date (oldest first)</ion-select-option>
-        <ion-select-option value="amount-desc">Amount (high → low)</ion-select-option>
-        <ion-select-option value="amount-asc">Amount (low → high)</ion-select-option>
-      </ion-select>
+      <ion-item lines="none" class="filter-item">
+        <ion-icon slot="start" name="swap-vertical-outline" color="medium"></ion-icon>
+        <ion-select
+          interface="popover"
+          [value]="currentSort"
+          (ionChange)="onSortChange($event.detail.value)"
+          placeholder="Sort by"
+        >
+          <ion-select-option value="date-desc">Newest first</ion-select-option>
+          <ion-select-option value="date-asc">Oldest first</ion-select-option>
+          <ion-select-option value="amount-desc">Highest amount</ion-select-option>
+          <ion-select-option value="amount-asc">Lowest amount</ion-select-option>
+        </ion-select>
+      </ion-item>
 
-      <!-- Category -->
-      <ion-select
-        interface="popover"
-        [value]="category()"
-        (ionChange)="category.set($event.detail.value)"
-      >
-        <ion-icon slot="start" name="pricetag-outline"></ion-icon>
-        <ion-select-option value="all">Category</ion-select-option>
-        <ion-select-option *ngFor="let c of categories()" [value]="c">{{ c }}</ion-select-option>
-      </ion-select>
+      <!-- Category Filter -->
+      <ion-item lines="none" class="filter-item">
+        <ion-icon slot="start" name="pricetag-outline" color="medium"></ion-icon>
+        <ion-select
+          interface="popover"
+          [value]="currentCategory"
+          (ionChange)="onCategoryChange($event.detail.value)"
+          placeholder="All Categories"
+        >
+          <ion-select-option value="all">All Categories</ion-select-option>
+          <ion-select-option *ngFor="let category of availableCategories" [value]="category">
+            {{ category }}
+          </ion-select-option>
+        </ion-select>
+      </ion-item>
 
       <!-- Search -->
       <ion-searchbar
-        placeholder="Search"
-        [value]="query()"
-        (ionInput)="query.set($event.detail.value ?? '')"
-        show-clear-button="always"
+        [value]="searchQuery"
+        (ionInput)="onSearchChange($event.detail.value!)"
+        placeholder="Search expenses..."
+        show-clear-button="focus"
+        debounce="300"
       ></ion-searchbar>
     </div>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <ion-list lines="full">
-    <ion-item *ngIf="groupedByDay().length === 0">
-      <ion-label>
-        <h2>Keine Ausgaben</h2>
-        <p>Wechsle unten den Monat oder passe die Filter an.</p>
-      </ion-label>
-    </ion-item>
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="circular"></ion-spinner>
+    <p>Loading expenses...</p>
+  </div>
 
-    <!-- Tagesgruppen -->
-    <ng-container *ngFor="let group of groupedByDay()">
-      <ion-item class="day-divider">
-        <ion-label>
-          <ion-note>{{ group.dayLabel }}</ion-note>
-        </ion-label>
+  <!-- Main Content -->
+  <div *ngIf="!isLoading">
+    <!-- Monthly Summary Card -->
+    <ion-card class="summary-card">
+      <ion-card-content>
+        <div class="summary-content">
+          <div class="summary-item">
+            <ion-icon name="calendar-outline" color="primary"></ion-icon>
+            <div>
+              <p class="summary-label">Period</p>
+              <p class="summary-value">{{ currentDate | date:'MMMM yyyy' }}</p>
+            </div>
+          </div>
+          <div class="summary-item">
+            <ion-icon name="receipt-outline" color="secondary"></ion-icon>
+            <div>
+              <p class="summary-label">Transactions</p>
+              <p class="summary-value">{{ totalTransactions }}</p>
+            </div>
+          </div>
+          <div class="summary-item">
+            <ion-icon name="cash-outline" color="success"></ion-icon>
+            <div>
+              <p class="summary-label">Total Amount</p>
+              <p class="summary-value amount-highlight">{{ monthTotal | currency:'CHF':'symbol':'1.2-2' }}</p>
+            </div>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Expense List -->
+    <ion-list lines="full" class="expense-list">
+      <!-- Empty State -->
+      <ion-item *ngIf="groupedExpenses.length === 0" class="empty-state">
+        <div class="empty-content">
+          <ion-icon name="receipt-outline" size="large" color="medium"></ion-icon>
+          <h3>No expenses found</h3>
+          <p>{{ getEmptyStateMessage() }}</p>
+          <ion-button 
+            fill="clear" 
+            color="primary"
+            (click)="clearFilters()"
+            *ngIf="hasActiveFilters()"
+          >
+            Clear Filters
+          </ion-button>
+        </div>
       </ion-item>
 
-      <ion-item *ngFor="let exp of group.items">
-        <ion-label>
-          <h2>{{ exp.title }}</h2>
-          <p>
-            <ion-chip size="small">{{ exp.category }}</ion-chip>
-            <ion-note>{{ exp.date | date:'shortTime' }}</ion-note>
-            <ion-note *ngIf="exp.note">• {{ exp.note }}</ion-note>
-          </p>
-        </ion-label>
+      <!-- Expense Groups by Day -->
+      <ng-container *ngFor="let group of groupedExpenses; trackBy: trackByDay">
+        <!-- Day Header -->
+        <ion-item class="day-divider">
+          <ion-label>
+            <div class="day-header">
+              <h3>{{ group.dayLabel }}</h3>
+              <ion-badge color="primary" class="day-total">
+                {{ getDayTotal(group.items) | currency:'CHF':'symbol':'1.2-2' }}
+              </ion-badge>
+            </div>
+          </ion-label>
+        </ion-item>
 
-        <ion-note class="amount" slot="end">
-          {{ exp.amount | currency:'CHF':'symbol':'1.2-2' }}
-        </ion-note>
-        <ion-icon name="chevron-forward" slot="end"></ion-icon>
-      </ion-item>
-    </ng-container>
-  </ion-list>
+        <!-- Expense Items -->
+        <ion-item 
+          *ngFor="let expense of group.items; trackBy: trackByExpense"
+          button
+          (click)="onExpenseClick(expense)"
+          class="expense-item"
+        >
+          <div class="expense-icon" slot="start">
+            <ion-icon [name]="getCategoryIcon(expense.category?.name)" [color]="getCategoryColor(expense.category?.name)"></ion-icon>
+          </div>
 
-  <!-- FAB -->
+          <ion-label>
+            <h2>{{ expense.name }}</h2>
+            <p class="expense-details">
+              <ion-chip 
+                size="small" 
+                [color]="getCategoryColor(expense.category?.name)"
+                class="category-chip"
+                *ngIf="expense.category"
+              >
+                {{ expense.category.name }}
+              </ion-chip>
+              <span class="expense-time">{{ expense.date | date:'HH:mm' }}</span>
+            </p>
+          </ion-label>
+
+          <div slot="end" class="expense-amount">
+            <ion-note class="amount">
+              {{ expense.amount | currency:'CHF':'symbol':'1.2-2' }}
+            </ion-note>
+            <ion-icon name="chevron-forward" color="medium"></ion-icon>
+          </div>
+        </ion-item>
+      </ng-container>
+    </ion-list>
+  </div>
+
+  <!-- Floating Action Button -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-    <ion-fab-button color="primary">
-      <ion-icon name="add-outline"></ion-icon>
+    <ion-fab-button color="primary" (click)="onAddExpense()">
+      <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 </ion-content>
 
-<!-- Footer -->
+<!-- Footer with Enhanced Navigation -->
 <ion-footer>
   <ion-toolbar class="bottom-toolbar">
     <ion-buttons slot="start">
-      <ion-button (click)="addMonths(-1)">
+      <ion-button (click)="addMonths(-1)" [disabled]="isLoading">
         <ion-icon name="chevron-back-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
 
-    <div class="footer-title">{{ date | date:'MMMM yyyy' }}</div>
+    <div class="footer-content">
+      <ion-title>{{ currentDate | date:'MMMM yyyy' }}</ion-title>
+      <p class="period-summary" *ngIf="!isLoading">
+        {{ totalTransactions }} transaction{{ totalTransactions !== 1 ? 's' : '' }}
+      </p>
+    </div>
 
     <ion-buttons slot="end">
-      <ion-button (click)="addMonths(1)">
+      <ion-button (click)="addMonths(1)" [disabled]="isLoading">
         <ion-icon name="chevron-forward-outline"></ion-icon>
       </ion-button>
     </ion-buttons>

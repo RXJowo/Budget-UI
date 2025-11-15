@@ -51,36 +51,37 @@ export interface CategoryCriteria extends PagingCriteria {
 export interface AllCategoryCriteria extends SortCriteria {
   name?: string;
 }
+
 // --------
 // Expense
 // --------
 
 export interface Expense {
-  id?: string;
+  id: string;
   createdAt: string;
   lastModifiedAt: string;
-  bookingDate: string;
   amount: number;
-  description: string;
-  category: Category;
+  category?: Category;
+  date: string;
+  name: string;
 }
 
 export interface ExpenseUpsertDto {
   id?: string;
-  bookingDate: string;
   amount: number;
-  description: string;
-  categoryId: string;
+  categoryId?: string;
+  date: string;
+  name: string;
 }
 
 export interface ExpenseCriteria extends PagingCriteria {
-  from?: string;
-  to?: string;
-  categoryId?: string;
+  categoryIds?: string[];
+  name?: string;
+  yearMonth?: string;
 }
 
 export interface AllExpenseCriteria extends SortCriteria {
-  from?: string;
-  to?: string;
-  categoryId?: string;
+  categoryIds?: string[];
+  name?: string;
+  yearMonth?: string;
 }

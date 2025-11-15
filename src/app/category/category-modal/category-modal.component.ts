@@ -3,14 +3,20 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ModalController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { close, save, text, trash } from 'ionicons/icons';
-import { Category, CategoryUpsertDto } from '../../shared/domain';
-import { CategoryService } from '../category.service';
-import { ToastService } from '../../shared/service/toast.service';
-import { LoadingIndicatorService } from '../../shared/service/loading-indicator.service';
-import { ActionSheetService } from '../../shared/service/action-sheet.service';
 import { finalize, mergeMap } from 'rxjs';
 import { ViewDidEnter, ViewWillEnter } from '@ionic/angular';
 import { IonInput } from '@ionic/angular/standalone';
+
+// Import von der korrigierten CategoryService
+import { 
+  Category, 
+  CategoryUpsertDto, 
+  CategoryService 
+} from '../category.service';
+
+import { ToastService } from '../../shared/service/toast.service';
+import { LoadingIndicatorService } from '../../shared/service/loading-indicator.service';
+import { ActionSheetService } from '../../shared/service/action-sheet.service';
 
 // Ionic Imports
 import {
@@ -46,7 +52,7 @@ import {
   ]
 })
 export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnter {
-  // DI
+  // DI - mit typisierten Injections
   private readonly actionSheetService = inject(ActionSheetService);
   private readonly categoryService = inject(CategoryService);
   private readonly formBuilder = inject(FormBuilder);
@@ -96,7 +102,7 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
               this.toastService.displaySuccessToast('Category saved');
               this.modalCtrl.dismiss(null, 'refresh');
             },
-            error: error => this.toastService.displayWarningToast('Could not save category', error)
+            error: (error: any) => this.toastService.displayWarningToast('Could not save category', error)
           });
       });
   }
@@ -114,7 +120,7 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
               this.toastService.displaySuccessToast('Category deleted');
               this.modalCtrl.dismiss(null, 'refresh');
             },
-            error: error => this.toastService.displayWarningToast('Could not delete category', error)
+            error: (error: any) => this.toastService.displayWarningToast('Could not delete category', error)
           });
       });
   }

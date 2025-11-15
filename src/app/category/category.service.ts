@@ -9,15 +9,40 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import {
-  AllCategoryCriteria,
-  Category,
-  CategoryCriteria,
-  CategoryUpsertDto,
-  Page,
-} from '../shared/domain';
 
-// --- Statische Mock-Datenbank ---
+export interface Category {
+  id?: string;
+  createdAt: string;
+  lastModifiedAt: string;
+  color?: string;
+  name: string;
+}
+
+export interface CategoryUpsertDto {
+  id?: string;
+  color?: string;
+  name: string;
+}
+
+export interface CategoryCriteria {
+  page: number;
+  size: number;
+  sort: string;
+  name?: string;
+}
+
+export interface AllCategoryCriteria {
+  sort: string;
+  name?: string;
+}
+
+export interface Page<T> {
+  content: T[];
+  last: boolean;
+  totalElements: number;
+}
+
+// Mock data for categories
 const MOCK_CATEGORIES: Category[] = [
   {
     id: '1',
@@ -68,17 +93,14 @@ const MOCK_CATEGORIES: Category[] = [
     lastModifiedAt: '2024-01-02T17:00:00Z',
   },
 ];
-// ------------------------------
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
   private categoriesDb = new BehaviorSubject<Category[]>(MOCK_CATEGORIES);
-
-
   private delayMs = 300;
-
   private readonly httpClient = inject(HttpClient);
 
+  // Method for category-list.component.ts compatibility
   getCategories = (
     pagingCriteria: CategoryCriteria
   ): Observable<Page<Category>> => {
@@ -104,12 +126,10 @@ export class CategoryService {
         const end = start + pagingCriteria.size;
         const pageContent = filteredCategories.slice(start, end);
 
-        
         const page: Page<Category> = {
           content: pageContent,
           totalElements: filteredCategories.length,
           last: end >= filteredCategories.length,
-          
         };
         return page;
       }),
@@ -117,12 +137,16 @@ export class CategoryService {
     );
   };
 
-
+  // Method for expense components
   getAllCategories = (
-    sortCriteria: AllCategoryCriteria
+    sortCriteria?: AllCategoryCriteria
   ): Observable<Category[]> => {
     return this.categoriesDb.asObservable().pipe(
       map((categories) => {
+        if (!sortCriteria) {
+          return [...categories];
+        }
+        
         const [sortField, sortOrder] = sortCriteria.sort.split(',');
         return [...categories].sort((a, b) => {
           const valA = a[sortField as keyof Category] as string | Date;
@@ -164,7 +188,6 @@ export class CategoryService {
       switchMap(() => of(undefined))
     );
   };
-
 
   deleteCategory = (id: string): Observable<void> => {
     return of(null).pipe(
