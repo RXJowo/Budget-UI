@@ -7,7 +7,7 @@ import { finalize, mergeMap } from 'rxjs';
 import { ViewDidEnter, ViewWillEnter } from '@ionic/angular';
 import { IonInput } from '@ionic/angular/standalone';
 
-// Import von der korrigierten CategoryService
+// Import von der aktualisierten CategoryService
 import { 
   Category, 
   CategoryUpsertDto, 
@@ -52,7 +52,7 @@ import {
   ]
 })
 export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnter {
-  // DI - mit typisierten Injections
+  // DI - mit Backend CategoryService
   private readonly actionSheetService = inject(ActionSheetService);
   private readonly categoryService = inject(CategoryService);
   private readonly formBuilder = inject(FormBuilder);
@@ -69,7 +69,8 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
   // Form
   readonly categoryForm = this.formBuilder.group({
     id: [undefined as string | undefined],
-    name: ['', [Validators.required, Validators.maxLength(40)]]
+    name: ['', [Validators.required, Validators.maxLength(40)]],
+    color: ['']
   });
 
   constructor() {
@@ -77,6 +78,7 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
   }
 
   ionViewWillEnter(): void {
+    console.log('CategoryModalComponent: ionViewWillEnter with category:', this.category);
     this.categoryForm.patchValue(this.category);
   }
 
@@ -86,28 +88,51 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
 
   // Actions
   cancel(): void {
+    console.log('CategoryModalComponent: cancel clicked');
     this.modalCtrl.dismiss(null, 'cancel');
   }
 
   save(): void {
-    this.loadingIndicatorService
-      .showLoadingIndicator({ message: 'Saving category' })
-      .subscribe(loadingIndicator => {
-        const category = this.categoryForm.value as CategoryUpsertDto;
-        this.categoryService
-          .upsertCategory(category)
-          .pipe(finalize(() => loadingIndicator.dismiss()))
-          .subscribe({
-            next: () => {
-              this.toastService.displaySuccessToast('Category saved');
-              this.modalCtrl.dismiss(null, 'refresh');
-            },
-            error: (error: any) => this.toastService.displayWarningToast('Could not save category', error)
-          });
-      });
+    console.log('CategoryModalComponent: save clicked');
+    console.log('Form valid:', this.categoryForm.valid);
+    console.log('Form value:', this.categoryForm.value);
+
+    if (this.categoryForm.valid) {
+      this.loadingIndicatorService
+        .showLoadingIndicator({ message: 'Saving category' })
+        .subscribe(loadingIndicator => {
+          const category = this.categoryForm.value as CategoryUpsertDto;
+          
+          console.log('Saving category:', category);
+          
+          this.categoryService
+            .upsertCategory(category)
+            .pipe(finalize(() => loadingIndicator.dismiss()))
+            .subscribe({
+              next: () => {
+                console.log('✅ Category saved successfully');
+                this.toastService.displaySuccessToast('Category saved');
+                this.modalCtrl.dismiss(null, 'refresh');
+              },
+              error: (error: any) => {
+                console.error('❌ Error saving category:', error);
+                this.toastService.displayWarningToast('Could not save category', error);
+              }
+            });
+        });
+    } else {
+      console.log('Form is invalid:', this.getFormErrors());
+    }
   }
 
   delete(): void {
+    if (!this.category.id) {
+      console.warn('Cannot delete category: No ID provided');
+      return;
+    }
+
+    console.log('CategoryModalComponent: delete clicked for category:', this.category.id);
+
     this.actionSheetService
       .showDeletionConfirmation('Are you sure you want to delete this category?')
       .pipe(mergeMap(() => this.loadingIndicatorService.showLoadingIndicator({ message: 'Deleting category' })))
@@ -117,11 +142,26 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
           .pipe(finalize(() => loadingIndicator.dismiss()))
           .subscribe({
             next: () => {
+              console.log('✅ Category deleted successfully');
               this.toastService.displaySuccessToast('Category deleted');
               this.modalCtrl.dismiss(null, 'refresh');
             },
-            error: (error: any) => this.toastService.displayWarningToast('Could not delete category', error)
+            error: (error: any) => {
+              console.error('❌ Error deleting category:', error);
+              this.toastService.displayWarningToast('Could not delete category', error);
+            }
           });
       });
+  }
+
+  private getFormErrors(): any {
+    const errors: any = {};
+    Object.keys(this.categoryForm.controls).forEach(key => {
+      const control = this.categoryForm.get(key);
+      if (control?.errors) {
+        errors[key] = control.errors;
+      }
+    });
+    return errors;
   }
 }
