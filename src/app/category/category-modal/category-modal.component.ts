@@ -7,7 +7,7 @@ import { finalize, mergeMap } from 'rxjs';
 import { ViewDidEnter, ViewWillEnter } from '@ionic/angular';
 import { IonInput } from '@ionic/angular/standalone';
 
-// Import von der aktualisierten CategoryService
+// DIREKTE Imports aus CategoryService - NICHT aus shared/domain
 import { 
   Category, 
   CategoryUpsertDto, 
@@ -52,7 +52,7 @@ import {
   ]
 })
 export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnter {
-  // DI - mit Backend CategoryService
+  // DI - with proper typing
   private readonly actionSheetService = inject(ActionSheetService);
   private readonly categoryService = inject(CategoryService);
   private readonly formBuilder = inject(FormBuilder);
@@ -122,6 +122,11 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
         });
     } else {
       console.log('Form is invalid:', this.getFormErrors());
+      // Markiere alle Felder als touched um Validation Errors zu zeigen
+      Object.keys(this.categoryForm.controls).forEach(key => {
+        const control = this.categoryForm.get(key);
+        control?.markAsTouched();
+      });
     }
   }
 
