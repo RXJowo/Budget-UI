@@ -7,7 +7,7 @@ import { finalize, mergeMap } from 'rxjs';
 import { ViewDidEnter, ViewWillEnter } from '@ionic/angular';
 import { IonInput } from '@ionic/angular/standalone';
 
-// DIREKTE Imports aus CategoryService - NICHT aus shared/domain
+//Imports aus CategoryService
 import { 
   Category, 
   CategoryUpsertDto, 
@@ -52,7 +52,6 @@ import {
   ]
 })
 export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnter {
-  // DI - with proper typing
   private readonly actionSheetService = inject(ActionSheetService);
   private readonly categoryService = inject(CategoryService);
   private readonly formBuilder = inject(FormBuilder);
@@ -60,13 +59,10 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
   private readonly modalCtrl = inject(ModalController);
   private readonly toastService = inject(ToastService);
 
-  // Passed into the component by the ModalController
   category: Category = {} as Category;
 
-  // ViewChild
   @ViewChild('nameInput') nameInput?: IonInput;
 
-  // Form
   readonly categoryForm = this.formBuilder.group({
     id: [undefined as string | undefined],
     name: ['', [Validators.required, Validators.maxLength(40)]],

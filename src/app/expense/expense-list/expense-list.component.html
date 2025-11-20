@@ -1,295 +1,80 @@
-<!-- ------ -->
-<!-- Header -->
-<!-- ------ -->
 <ion-header>
   <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-menu-button/>
-    </ion-buttons>
-    <ion-title>Ausgaben</ion-title>
-  </ion-toolbar>
-  <ion-toolbar>
-    @if (loading) {
-      <ion-progress-bar type="indeterminate" />
-    }
+    <ion-title>Expenses</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<!-- ------- -->
-<!-- Content -->
-<!-- ------- -->
 <ion-content>
-  <!-- Refresher -->
-  <ion-refresher slot="fixed" [disabled]="loading" (ionRefresh)="reloadExpenses($event)">
-    <ion-refresher-content />
-  </ion-refresher>
+  <ion-list>
+    <!-- Beispiel Expense Items -->
+    <ion-item>
+      <ion-icon name="pricetag" slot="start" color="primary"></ion-icon>
+      <ion-label>
+        <h2>Groceries</h2>
+        <p>15.11.2024</p>
+      </ion-label>
+      <ion-note slot="end" color="danger">CHF 45.50</ion-note>
+    </ion-item>
 
-  <!-- Search & Filter Controls -->
-  <ion-grid class="ion-padding" [formGroup]="searchForm">
-    <!-- View Mode Segment -->
-    <ion-row>
-      <ion-col size="12">
-        <ion-segment 
-          [value]="viewMode" 
-          (ionChange)="onViewModeChange($any($event).detail.value)">
-          <ion-segment-button value="grouped">
-            <ion-icon name="calendar"></ion-icon>
-            <ion-label>Nach Tag</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="summary">
-            <ion-icon name="stats-chart"></ion-icon>
-            <ion-label>Übersicht</ion-label>
-          </ion-segment-button>
-          <ion-segment-button value="list">
-            <ion-icon name="list"></ion-icon>
-            <ion-label>Liste</ion-label>
-          </ion-segment-button>
-        </ion-segment>
-      </ion-col>
-    </ion-row>
+    <ion-item>
+      <ion-icon name="pricetag" slot="start" color="success"></ion-icon>
+      <ion-label>
+        <h2>Transport</h2>
+        <p>14.11.2024</p>
+      </ion-label>
+      <ion-note slot="end" color="danger">CHF 12.00</ion-note>
+    </ion-item>
 
-    <!-- Month Selection -->
-    <ion-row [formGroup]="monthForm">
-      <ion-col size="12" size-sm="6">
-        <ion-item>
-          <ion-icon name="calendar" slot="start" />
-          <ion-label>Monat</ion-label>
-          <ion-datetime 
-            presentation="month-year"
-            formControlName="selectedMonth"
-            [value]="selectedMonth + '-01'"
-            (ionChange)="monthForm.patchValue({selectedMonth: $any($event).detail.value.substring(0,7)})">
-          </ion-datetime>
-        </ion-item>
-      </ion-col>
-      <ion-col size="12" size-sm="6">
-        <ion-item>
-          <ion-icon name="swap-vertical" slot="start" />
-          <ion-select interface="popover" formControlName="sort">
-            @for (sortOption of sortOptions; track sortOption.label) {
-              <ion-select-option [value]="sortOption.value">
-                {{ sortOption.label }}
-              </ion-select-option>
-            }
-          </ion-select>
-        </ion-item>
-      </ion-col>
-    </ion-row>
+    <ion-item>
+      <ion-icon name="pricetag" slot="start" color="warning"></ion-icon>
+      <ion-label>
+        <h2>Restaurant</h2>
+        <p>13.11.2024</p>
+      </ion-label>
+      <ion-note slot="end" color="danger">CHF 65.00</ion-note>
+    </ion-item>
 
-    <!-- Search & Category Filter -->
-    <ion-row>
-      <ion-col size="12" size-sm="6">
-        <ion-item>
-          <ion-icon name="search" slot="start" />
-          <ion-input 
-            maxlength="100" 
-            placeholder="Ausgabe suchen" 
-            formControlName="name" 
-            [clearInput]="true" 
-          />
-        </ion-item>
-      </ion-col>
-      <ion-col size="12" size-sm="6">
-        <ion-item>
-          <ion-icon name="pricetag" slot="start" />
-          <ion-select 
-            interface="popover" 
-            placeholder="Kategorie wählen" 
-            formControlName="categoryId"
-            [clearInput]="true">
-            @for (category of availableCategories; track category.id) {
-              <ion-select-option [value]="category.id">
-                {{ category.name }}
-              </ion-select-option>
-            }
-          </ion-select>
-        </ion-item>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+    <ion-item>
+      <ion-icon name="pricetag" slot="start" color="tertiary"></ion-icon>
+      <ion-label>
+        <h2>Shopping</h2>
+        <p>12.11.2024</p>
+      </ion-label>
+      <ion-note slot="end" color="danger">CHF 120.00</ion-note>
+    </ion-item>
 
-  <!-- Content based on view mode -->
-  @switch (viewMode) {
-    <!-- SUMMARY VIEW - Monatszusammenfassung -->
-    @case ('summary') {
-      @if (monthSummary; as summary) {
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>
-              {{ getMonthDisplayName(summary.month) }}
-            </ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row>
-                <ion-col size="6">
-                  <h3>{{ summary.totalAmount | currency:'EUR':'symbol':'1.2-2':'de' }}</h3>
-                  <p>Gesamtausgaben</p>
-                </ion-col>
-                <ion-col size="6">
-                  <h3>{{ summary.expenseCount }}</h3>
-                  <p>Anzahl Ausgaben</p>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-            
-            <h4>Nach Kategorien:</h4>
-            <ion-list>
-              @for (category of summary.categories | keyvalue; track category.key) {
-                <ion-item>
-                  <ion-label>
-                    <h3>{{ category.key }}</h3>
-                    <p>{{ getExpensesByCategory(category.key).length }} Ausgaben</p>
-                  </ion-label>
-                  <ion-badge slot="end" color="primary">
-                    {{ category.value | currency:'EUR':'symbol':'1.2-2':'de' }}
-                  </ion-badge>
-                </ion-item>
-              }
-            </ion-list>
-          </ion-card-content>
-        </ion-card>
-      } @else {
-        <!-- Wenn es keine Ausgaben für den Monat gibt -->
-        <ion-card>
-          <ion-card-content class="ion-text-center">
-            <ion-icon name="alert-circle-outline" size="large" color="medium"></ion-icon>
-            <h2>{{ getEmptyStateMessage() }}</h2>
-            <p>Erstellen Sie Ihre erste Ausgabe für diesen Monat.</p>
-            <ion-button fill="outline" (click)="openExpenseModal()">
-              <ion-icon name="add" slot="start"></ion-icon>
-              Ausgabe hinzufügen
-            </ion-button>
-          </ion-card-content>
-        </ion-card>
-      }
-    }
+    <ion-item>
+      <ion-icon name="pricetag" slot="start" color="secondary"></ion-icon>
+      <ion-label>
+        <h2>Entertainment</h2>
+        <p>10.11.2024</p>
+      </ion-label>
+      <ion-note slot="end" color="danger">CHF 35.00</ion-note>
+    </ion-item>
+  </ion-list>
 
-    <!-- GROUPED VIEW - Gruppierte Ausgaben nach Datum -->
-    @case ('grouped') {
-      @switch (groupedExpenses?.length) {
-        @case (null) {
-          <!-- Loading Skeleton -->
-          @for (i of [0, 1, 2, 3, 4]; track i) {
-            <ion-item-group>
-              <ion-item-divider>
-                <ion-skeleton-text style="width: 120px" [animated]="true"></ion-skeleton-text>
-              </ion-item-divider>
-              @for (j of [0, 1]; track j) {
-                <ion-item>
-                  <ion-label>
-                    <ion-skeleton-text style="width: 200px" [animated]="true"></ion-skeleton-text>
-                    <ion-skeleton-text style="width: 100px" [animated]="true"></ion-skeleton-text>
-                  </ion-label>
-                </ion-item>
-              }
-            </ion-item-group>
-          }
-        }
-
-        @case (0) {
-          <ion-card>
-            <ion-card-content class="ion-text-center">
-              <ion-icon name="alert-circle-outline" size="large" color="medium"></ion-icon>
-              <h2>{{ getEmptyStateMessage() }}</h2>
-            </ion-card-content>
-          </ion-card>
-        }
-
-        @default {
-          <!-- Gruppierte Ausgaben anzeigen -->
-          @for (group of groupedExpenses; track group.date) {
-            <ion-item-group>
-              <!-- Datum-Header mit Tagesgesamt -->
-              <ion-item-divider>
-                <ion-label>
-                  <h2>{{ group.date | date:'fullDate':'':'de' }}</h2>
-                  <p>{{ group.expenses.length }} Ausgaben</p>
-                </ion-label>
-                <ion-badge slot="end" color="primary">
-                  {{ group.totalAmount | currency:'EUR':'symbol':'1.2-2':'de' }}
-                </ion-badge>
-              </ion-item-divider>
-
-              <!-- Ausgaben des Tages -->
-              @for (expense of group.expenses; track expense.id) {
-                <ion-item button="true" [detail]="true" (click)="openExpenseModal(expense)">
-                  <ion-icon 
-                    [name]="expense.category?.color ? 'ellipse' : 'pricetag-outline'" 
-                    [style.color]="expense.category?.color || 'var(--ion-color-medium)'" 
-                    slot="start">
-                  </ion-icon>
-                  <ion-label>
-                    <h3>{{ expense.name }}</h3>
-                    <p>{{ getCategoryName(expense) }}</p>
-                  </ion-label>
-                  <ion-badge slot="end" [color]="expense.amount > 100 ? 'warning' : 'success'">
-                    {{ expense.amount | currency:'EUR':'symbol':'1.2-2':'de' }}
-                  </ion-badge>
-                </ion-item>
-              }
-            </ion-item-group>
-          }
-        }
-      }
-    }
-
-    <!-- LIST VIEW - Klassische Listendarstellung -->
-    @case ('list') {
-      @switch (expenses?.length) {
-        @case (null) {
-          <!-- Loading Skeleton -->
-          @for (i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; track i) {
-            <ion-item>
-              <ion-label>
-                <ion-skeleton-text style="width: 200px" [animated]="true"></ion-skeleton-text>
-                <ion-skeleton-text style="width: 100px" [animated]="true"></ion-skeleton-text>
-              </ion-label>
-            </ion-item>
-          }
-        }
-
-        @case (0) {
-          <ion-item>
-            <ion-icon slot="start" name="alert-circle-outline" />
-            <ion-label>{{ getEmptyStateMessage() }}</ion-label>
-          </ion-item>
-        }
-
-        @default {
-          <!-- Expense List -->
-          @for (expense of expenses; track expense.id) {
-            <ion-item button="true" [detail]="true" (click)="openExpenseModal(expense)">
-              <ion-icon 
-                [name]="expense.category?.color ? 'ellipse' : 'pricetag-outline'" 
-                [style.color]="expense.category?.color || 'var(--ion-color-medium)'" 
-                slot="start">
-              </ion-icon>
-              <ion-label>
-                <h3>{{ expense.name }}</h3>
-                <p>{{ getCategoryName(expense) }} • {{ expense.date | date:'shortDate':'':'de' }}</p>
-              </ion-label>
-              <ion-badge slot="end" [color]="expense.amount > 100 ? 'warning' : 'success'">
-                {{ expense.amount | currency:'EUR':'symbol':'1.2-2':'de' }}
-              </ion-badge>
-            </ion-item>
-          }
-        }
-      }
-    }
-  }
-
-  <!-- Infinite Scroll -->
-  @if (viewMode === 'list') {
-    <ion-infinite-scroll [disabled]="lastPageReached" (ionInfinite)="loadNextExpensePage($event)">
-      <ion-infinite-scroll-content />
-    </ion-infinite-scroll>
-  }
-
-  <!-- Create Button -->
+  <!-- FAB Button für neue Expense -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-    <ion-fab-button (click)="openExpenseModal()">
-      <ion-icon name="add"/>
+    <ion-fab-button>
+      <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 </ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="addMonths(-1)">
+        <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    
+    <ion-title>{{ date | date: "MMMM yyyy" }}</ion-title>
+    
+    <ion-buttons slot="end">
+      <ion-button (click)="addMonths(1)">
+        <ion-icon name="arrow-forward" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-footer>

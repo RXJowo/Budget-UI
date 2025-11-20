@@ -11,9 +11,6 @@ import {
   catchError,
 } from 'rxjs';
 
-// Import zentrale Auth-Konfiguration
-import { AUTH_CONFIG, getAuthHeaders, isTokenConfigured } from '../shared/config/auth.config';
-
 export interface Category {
   id?: string;
   createdAt: string;
@@ -104,8 +101,25 @@ export class CategoryService {
   private delayMs = 300;
   private readonly httpClient = inject(HttpClient);
   
-  // Verwende zentrale Auth-Konfiguration
-  private readonly apiUrl = `${AUTH_CONFIG.baseUrl}/categories`;
+  // 🔑 HARDCODED WORKING TOKEN (aus deinem Debug-Test)
+  private readonly baseUrl = 'https://budget-service.onrender.com';
+  private readonly apiUrl = `${this.baseUrl}/categories`;
+  
+  // ⚠️ ERSETZE DIESEN TOKEN MIT DEINEM WORKING TOKEN!
+  private readonly authToken = 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjQ1YTZjMGMyYjgwMDcxN2EzNGQ1Y2JiYmYzOWI4NGI2NzYxMjgyNjUiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSm9uIFdvbmciLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0ZicFlxWjZYYUl6SHZRQ0NTVGJVZFhOQm5FQzRLWUN1YXU1TFlaMlVaRkdlMjlSMD1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9idWRnZXQtcGxhbm5lci03ZWRkYiIsImF1ZCI6ImJ1ZGdldC1wbGFubmVyLTdlZGRiIiwiYXV0aF90aW1lIjoxNzYyNjAxOTUyLCJ1c2VyX2lkIjoiMlMwMUdWcVZ5b2gxT2QzbllyVnNZQklQbFlFMiIsInN1YiI6IjJTMDFHVnFWeW9oMU9kM25ZclZzWUJJUGxZRTIiLCJpYXQiOjE3NjM1ODUyMjIsImV4cCI6MTc2MzU4ODgyMiwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExMzExNzc2OTEyMDk2NDY1MzA5OSJdfSwic2lnbl9pbl9wcm92aWRlciI6Imdvb2dsZS5jb20ifX0.nfGL5_mKfCY6Gca5jHYhDhKCbFwTIjDAapGi8-cEaWqAKzx_C5BPzujTI3EeqDoU4g9tyDB2pzrHNu4DjUuEDMYKEGxYOJEKgBzo7GOTudp4pYdQydalurc4VefeUjR_W9cA3q2w18FKra59lU6wmpoEwWMjW5vkPNg4wyXFD2gg_gacJvwuk_cxxog19sSRmTjl53Tw94pqIMEAA9y5p9cqSRMiOd8UF0SsuKILE3OnlGPu51CEmV_J0jmxXBtF4Sv8aQH5fGO-jM4xB_8zR-qGB1gk4vv62NHcywr29FLuOecr7syh3vEcFDHWZNLG-KPxAo_K5cAAJyrpbNr5Jg';
+  
+  // Backend ein/aus
+  private readonly useBackend = true;
+
+  /**
+   * Erzeugt die Standard-HTTP-Headers mit Authorization
+   */
+  private getAuthHeaders(): { [header: string]: string } {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.authToken}`
+    };
+  }
 
   /**
    * Method for category-list.component.ts compatibility
@@ -113,7 +127,7 @@ export class CategoryService {
   getCategories = (pagingCriteria: CategoryCriteria): Observable<Page<Category>> => {
     console.log('CategoryService.getCategories called with:', pagingCriteria);
     
-    if (!AUTH_CONFIG.useBackend || !isTokenConfigured()) {
+    if (!this.useBackend || this.authToken === 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjQ1YTZjMGMyYjgwMDcxN2EzNGQ1Y2JiYmYzOWI4NGI2NzYxMjgyNjUiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSm9uIFdvbmciLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0ZicFlxWjZYYUl6SHZRQ0NTVGJVZFhOQm5FQzRLWUN1YXU1TFlaMlVaRkdlMjlSMD1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9idWRnZXQtcGxhbm5lci03ZWRkYiIsImF1ZCI6ImJ1ZGdldC1wbGFubmVyLTdlZGRiIiwiYXV0aF90aW1lIjoxNzYyNjAxOTUyLCJ1c2VyX2lkIjoiMlMwMUdWcVZ5b2gxT2QzbllyVnNZQklQbFlFMiIsInN1YiI6IjJTMDFHVnFWeW9oMU9kM25ZclZzWUJJUGxZRTIiLCJpYXQiOjE3NjM1ODUyMjIsImV4cCI6MTc2MzU4ODgyMiwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExMzExNzc2OTEyMDk2NDY1MzA5OSJdfSwic2lnbl9pbl9wcm92aWRlciI6Imdvb2dsZS5jb20ifX0.nfGL5_mKfCY6Gca5jHYhDhKCbFwTIjDAapGi8-cEaWqAKzx_C5BPzujTI3EeqDoU4g9tyDB2pzrHNu4DjUuEDMYKEGxYOJEKgBzo7GOTudp4pYdQydalurc4VefeUjR_W9cA3q2w18FKra59lU6wmpoEwWMjW5vkPNg4wyXFD2gg_gacJvwuk_cxxog19sSRmTjl53Tw94pqIMEAA9y5p9cqSRMiOd8UF0SsuKILE3OnlGPu51CEmV_J0jmxXBtF4Sv8aQH5fGO-jM4xB_8zR-qGB1gk4vv62NHcywr29FLuOecr7syh3vEcFDHWZNLG-KPxAo_K5cAAJyrpbNr5Jg') {
       console.log('Using mock data for getCategories (backend disabled or no token)');
       return this.getMockCategories(pagingCriteria);
     }
@@ -121,7 +135,7 @@ export class CategoryService {
     // Backend implementation
     console.log('Using backend for getCategories');
     const params = this.buildHttpParams(pagingCriteria);
-    const headers = getAuthHeaders();
+    const headers = this.getAuthHeaders();
     
     console.log('GET request to:', this.apiUrl);
     console.log('Headers:', headers);
@@ -151,7 +165,7 @@ export class CategoryService {
   getAllCategories = (sortCriteria?: AllCategoryCriteria): Observable<Category[]> => {
     console.log('CategoryService.getAllCategories called with:', sortCriteria);
     
-    if (!AUTH_CONFIG.useBackend || !isTokenConfigured()) {
+    if (!this.useBackend || this.authToken === 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjQ1YTZjMGMyYjgwMDcxN2EzNGQ1Y2JiYmYzOWI4NGI2NzYxMjgyNjUiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSm9uIFdvbmciLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0ZicFlxWjZYYUl6SHZRQ0NTVGJVZFhOQm5FQzRLWUN1YXU1TFlaMlVaRkdlMjlSMD1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9idWRnZXQtcGxhbm5lci03ZWRkYiIsImF1ZCI6ImJ1ZGdldC1wbGFubmVyLTdlZGRiIiwiYXV0aF90aW1lIjoxNzYyNjAxOTUyLCJ1c2VyX2lkIjoiMlMwMUdWcVZ5b2gxT2QzbllyVnNZQklQbFlFMiIsInN1YiI6IjJTMDFHVnFWeW9oMU9kM25ZclZzWUJJUGxZRTIiLCJpYXQiOjE3NjM1ODUyMjIsImV4cCI6MTc2MzU4ODgyMiwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExMzExNzc2OTEyMDk2NDY1MzA5OSJdfSwic2lnbl9pbl9wcm92aWRlciI6Imdvb2dsZS5jb20ifX0.nfGL5_mKfCY6Gca5jHYhDhKCbFwTIjDAapGi8-cEaWqAKzx_C5BPzujTI3EeqDoU4g9tyDB2pzrHNu4DjUuEDMYKEGxYOJEKgBzo7GOTudp4pYdQydalurc4VefeUjR_W9cA3q2w18FKra59lU6wmpoEwWMjW5vkPNg4wyXFD2gg_gacJvwuk_cxxog19sSRmTjl53Tw94pqIMEAA9y5p9cqSRMiOd8UF0SsuKILE3OnlGPu51CEmV_J0jmxXBtF4Sv8aQH5fGO-jM4xB_8zR-qGB1gk4vv62NHcywr29FLuOecr7syh3vEcFDHWZNLG-KPxAo_K5cAAJyrpbNr5Jg') {
       console.log('Using mock data for getAllCategories (backend disabled or no token)');
       return this.getMockAllCategories(sortCriteria);
     }
@@ -166,7 +180,7 @@ export class CategoryService {
       params = params.set('name', sortCriteria.name.trim());
     }
     
-    const headers = getAuthHeaders();
+    const headers = this.getAuthHeaders();
     const url = `${this.apiUrl}/all`;
     
     console.log('GET request to:', url);
@@ -188,14 +202,14 @@ export class CategoryService {
   upsertCategory = (category: CategoryUpsertDto): Observable<void> => {
     console.log('CategoryService.upsertCategory called with:', category);
     
-    if (!AUTH_CONFIG.useBackend || !isTokenConfigured()) {
+    if (!this.useBackend || this.authToken === 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjQ1YTZjMGMyYjgwMDcxN2EzNGQ1Y2JiYmYzOWI4NGI2NzYxMjgyNjUiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSm9uIFdvbmciLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0ZicFlxWjZYYUl6SHZRQ0NTVGJVZFhOQm5FQzRLWUN1YXU1TFlaMlVaRkdlMjlSMD1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9idWRnZXQtcGxhbm5lci03ZWRkYiIsImF1ZCI6ImJ1ZGdldC1wbGFubmVyLTdlZGRiIiwiYXV0aF90aW1lIjoxNzYyNjAxOTUyLCJ1c2VyX2lkIjoiMlMwMUdWcVZ5b2gxT2QzbllyVnNZQklQbFlFMiIsInN1YiI6IjJTMDFHVnFWeW9oMU9kM25ZclZzWUJJUGxZRTIiLCJpYXQiOjE3NjM1ODUyMjIsImV4cCI6MTc2MzU4ODgyMiwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExMzExNzc2OTEyMDk2NDY1MzA5OSJdfSwic2lnbl9pbl9wcm92aWRlciI6Imdvb2dsZS5jb20ifX0.nfGL5_mKfCY6Gca5jHYhDhKCbFwTIjDAapGi8-cEaWqAKzx_C5BPzujTI3EeqDoU4g9tyDB2pzrHNu4DjUuEDMYKEGxYOJEKgBzo7GOTudp4pYdQydalurc4VefeUjR_W9cA3q2w18FKra59lU6wmpoEwWMjW5vkPNg4wyXFD2gg_gacJvwuk_cxxog19sSRmTjl53Tw94pqIMEAA9y5p9cqSRMiOd8UF0SsuKILE3OnlGPu51CEmV_J0jmxXBtF4Sv8aQH5fGO-jM4xB_8zR-qGB1gk4vv62NHcywr29FLuOecr7syh3vEcFDHWZNLG-KPxAo_K5cAAJyrpbNr5Jg') {
       console.log('Using mock data for upsertCategory (backend disabled or no token)');
       return this.mockUpsertCategory(category);
     }
 
     // Backend implementation
     console.log('Using backend for upsertCategory');
-    const headers = getAuthHeaders();
+    const headers = this.getAuthHeaders();
     
     console.log('PUT request to:', this.apiUrl);
     console.log('Headers:', headers);
@@ -217,14 +231,14 @@ export class CategoryService {
   deleteCategory = (id: string): Observable<void> => {
     console.log('CategoryService.deleteCategory called with id:', id);
     
-    if (!AUTH_CONFIG.useBackend || !isTokenConfigured()) {
+    if (!this.useBackend || this.authToken === 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjQ1YTZjMGMyYjgwMDcxN2EzNGQ1Y2JiYmYzOWI4NGI2NzYxMjgyNjUiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSm9uIFdvbmciLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jS0ZicFlxWjZYYUl6SHZRQ0NTVGJVZFhOQm5FQzRLWUN1YXU1TFlaMlVaRkdlMjlSMD1zOTYtYyIsImlzcyI6Imh0dHBzOi8vc2VjdXJldG9rZW4uZ29vZ2xlLmNvbS9idWRnZXQtcGxhbm5lci03ZWRkYiIsImF1ZCI6ImJ1ZGdldC1wbGFubmVyLTdlZGRiIiwiYXV0aF90aW1lIjoxNzYyNjAxOTUyLCJ1c2VyX2lkIjoiMlMwMUdWcVZ5b2gxT2QzbllyVnNZQklQbFlFMiIsInN1YiI6IjJTMDFHVnFWeW9oMU9kM25ZclZzWUJJUGxZRTIiLCJpYXQiOjE3NjM1ODUyMjIsImV4cCI6MTc2MzU4ODgyMiwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjExMzExNzc2OTEyMDk2NDY1MzA5OSJdfSwic2lnbl9pbl9wcm92aWRlciI6Imdvb2dsZS5jb20ifX0.nfGL5_mKfCY6Gca5jHYhDhKCbFwTIjDAapGi8-cEaWqAKzx_C5BPzujTI3EeqDoU4g9tyDB2pzrHNu4DjUuEDMYKEGxYOJEKgBzo7GOTudp4pYdQydalurc4VefeUjR_W9cA3q2w18FKra59lU6wmpoEwWMjW5vkPNg4wyXFD2gg_gacJvwuk_cxxog19sSRmTjl53Tw94pqIMEAA9y5p9cqSRMiOd8UF0SsuKILE3OnlGPu51CEmV_J0jmxXBtF4Sv8aQH5fGO-jM4xB_8zR-qGB1gk4vv62NHcywr29FLuOecr7syh3vEcFDHWZNLG-KPxAo_K5cAAJyrpbNr5Jg') {
       console.log('Using mock data for deleteCategory (backend disabled or no token)');
       return this.mockDeleteCategory(id);
     }
 
     // Backend implementation
     console.log('Using backend for deleteCategory');
-    const headers = getAuthHeaders();
+    const headers = this.getAuthHeaders();
     const url = `${this.apiUrl}/${id}`;
     
     console.log('DELETE request to:', url);
