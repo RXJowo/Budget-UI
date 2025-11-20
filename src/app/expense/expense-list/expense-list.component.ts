@@ -6,10 +6,6 @@ import {
   IonToolbar, 
   IonTitle, 
   IonContent, 
-  IonList, 
-  IonItem, 
-  IonLabel, 
-  IonNote, 
   IonIcon, 
   IonFab, 
   IonFabButton, 
@@ -21,6 +17,7 @@ import {
 import { ReactiveFormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { add, alertCircleOutline, arrowBack, arrowForward, pricetag, search, swapVertical } from 'ionicons/icons';
+import ExpenseModalComponent from '../expense-modal/expense-modal.component';
 
 @Component({
   selector: 'app-expense-list',
@@ -33,10 +30,6 @@ import { add, alertCircleOutline, arrowBack, arrowForward, pricetag, search, swa
     IonToolbar,
     IonTitle,
     IonContent,
-    IonList,
-    IonItem,
-    IonLabel,
-    IonNote,
     IonIcon,
     IonFab,
     IonFabButton,
@@ -64,4 +57,20 @@ export default class ExpenseListComponent {
   addMonths = (number: number): void => {
     this.date = addMonths(this.date, number);
   };
+
+  async openExpenseModal(): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: ExpenseModalComponent
+    });
+    
+    modal.present();
+    
+    const { data, role } = await modal.onWillDismiss();
+    
+    if (role === 'save') {
+      console.log('Expense saved:', data);
+    } else if (role === 'delete') {
+      console.log('Expense deleted');
+    }
+  }
 }

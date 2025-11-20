@@ -1,5 +1,23 @@
 import { Component, inject } from '@angular/core';
-import { ModalController } from '@ionic/angular/standalone';
+import { 
+  IonHeader, 
+  IonToolbar, 
+  IonTitle, 
+  IonButtons, 
+  IonButton, 
+  IonContent, 
+  IonList, 
+  IonItem, 
+  IonInput, 
+  IonLabel, 
+  IonNote, 
+  IonIcon, 
+  IonFooter,
+  IonDatetime,
+  IonDatetimeButton,
+  IonModal,
+  ModalController 
+} from '@ionic/angular/standalone';
 import { ReactiveFormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { add, calendar, cash, close, pricetag, save, text, trash } from 'ionicons/icons';
@@ -9,11 +27,32 @@ import CategoryModalComponent from '../../category/category-modal/category-modal
   selector: 'app-expense-modal',
   templateUrl: './expense-modal.component.html',
   standalone: true,
-  imports: [ReactiveFormsModule]
+  imports: [
+    ReactiveFormsModule,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonButton,
+    IonContent,
+    IonList,
+    IonItem,
+    IonInput,
+    IonLabel,
+    IonNote,
+    IonIcon,
+    IonFooter,
+    IonDatetime,
+    IonDatetimeButton,
+    IonModal
+  ]
 })
 export default class ExpenseModalComponent {
   // DI
   private readonly modalCtrl = inject(ModalController);
+
+  // State
+  currentDate = new Date().toISOString();
 
   // Lifecycle
 

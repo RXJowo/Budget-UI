@@ -1,1 +1,76 @@
-Expense Modal
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancel()">
+        <ion-icon name="close" slot="icon-only"></ion-icon>
+        CANCEL
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Add Expense</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="save()">
+        <ion-icon name="save" slot="icon-only"></ion-icon>
+        SAVE
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-list>
+    <!-- Name Input -->
+    <ion-item>
+      <ion-icon name="text" slot="start"></ion-icon>
+      <ion-input 
+        label="Name" 
+        labelPlacement="floating"
+        placeholder="Enter expense name">
+      </ion-input>
+    </ion-item>
+
+    <!-- Category Selection -->
+    <ion-item button (click)="showCategoryModal()">
+      <ion-icon name="pricetag" slot="start"></ion-icon>
+      <ion-label>Category</ion-label>
+      <ion-icon name="add" slot="end" color="primary"></ion-icon>
+    </ion-item>
+
+    <!-- Amount Input -->
+    <ion-item>
+      <ion-icon name="cash" slot="start"></ion-icon>
+      <ion-input 
+        label="Amount" 
+        labelPlacement="floating"
+        type="number"
+        placeholder="0.00">
+      </ion-input>
+      <ion-note slot="end">CHF</ion-note>
+    </ion-item>
+
+    <!-- Date Picker -->
+    <ion-item>
+      <ion-icon name="calendar" slot="start"></ion-icon>
+      <ion-datetime-button datetime="expense-date"></ion-datetime-button>
+    </ion-item>
+  </ion-list>
+
+  <!-- DateTime Modal -->
+  <ion-modal [keepContentsMounted]="true">
+    <ng-template>
+      <ion-datetime 
+        id="expense-date" 
+        presentation="date"
+        [value]="currentDate">
+      </ion-datetime>
+    </ng-template>
+  </ion-modal>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-button expand="full" color="danger" (click)="delete()">
+      <ion-icon name="trash" slot="start"></ion-icon>
+      Delete Expense
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

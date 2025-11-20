@@ -2,11 +2,35 @@
   <ion-toolbar>
     <ion-title>Expenses</ion-title>
   </ion-toolbar>
+  
+  <!-- Toolbar mit Sort, Filter und Search -->
+  <ion-toolbar>
+    <ion-button slot="start" fill="clear">
+      <ion-icon name="swap-vertical" slot="start"></ion-icon>
+      Date (newest first)
+    </ion-button>
+    
+    <ion-button slot="start" fill="clear">
+      <ion-icon name="pricetag" slot="start"></ion-icon>
+      All
+    </ion-button>
+    
+    <ion-button slot="end" fill="clear">
+      <ion-icon name="search" slot="icon-only"></ion-icon>
+      Search
+    </ion-button>
+  </ion-toolbar>
 </ion-header>
 
 <ion-content>
-  <ion-list>
-    <!-- Beispiel Expense Items -->
+  <!-- Empty State -->
+  <div class="empty-state">
+    <ion-icon name="alert-circle-outline" size="large"></ion-icon>
+    <p>No expenses found</p>
+  </div>
+
+  <!-- Beispiel Liste (auskommentiert für Empty State) -->
+  <!-- <ion-list>
     <ion-item>
       <ion-icon name="pricetag" slot="start" color="primary"></ion-icon>
       <ion-label>
@@ -51,11 +75,11 @@
       </ion-label>
       <ion-note slot="end" color="danger">CHF 35.00</ion-note>
     </ion-item>
-  </ion-list>
+  </ion-list> -->
 
   <!-- FAB Button für neue Expense -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-    <ion-fab-button>
+    <ion-fab-button (click)="openExpenseModal()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>
@@ -78,3 +102,23 @@
     </ion-buttons>
   </ion-toolbar>
 </ion-footer>
+
+<style>
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--ion-color-medium);
+  }
+  
+  .empty-state ion-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+  }
+  
+  .empty-state p {
+    font-size: 16px;
+  }
+</style>
