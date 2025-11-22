@@ -150,11 +150,21 @@ export default class ExpenseListComponent implements OnInit {
   private loadExpenses(): void {
     this.loading = true;
     
-    // Update search criteria with current filters
+    // Calculate start and end of current month
+    const startOfMonth = new Date(this.date.getFullYear(), this.date.getMonth(), 1);
+    const endOfMonth = new Date(this.date.getFullYear(), this.date.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    console.log('Loading expenses for month:', this.date);
+    console.log('Start of month:', startOfMonth.toISOString());
+    console.log('End of month:', endOfMonth.toISOString());
+    
+    // Update search criteria with current filters and date range
     this.searchCriteria = {
       ...this.searchCriteria,
       name: this.searchForm.value.name || undefined,
       categoryId: this.searchForm.value.category || undefined,
+      startDate: startOfMonth.toISOString(),
+      endDate: endOfMonth.toISOString(),
       page: 0 // Reset to first page
     };
     
@@ -204,6 +214,13 @@ export default class ExpenseListComponent implements OnInit {
 
   loadNextExpensePage(event: InfiniteScrollCustomEvent): void {
     this.searchCriteria.page++;
+    
+    // Keep the same date filters
+    const startOfMonth = new Date(this.date.getFullYear(), this.date.getMonth(), 1);
+    const endOfMonth = new Date(this.date.getFullYear(), this.date.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    this.searchCriteria.startDate = startOfMonth.toISOString();
+    this.searchCriteria.endDate = endOfMonth.toISOString();
     
     this.expenseService.getExpenses(this.searchCriteria).subscribe({
       next: (page) => {

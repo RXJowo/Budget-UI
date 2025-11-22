@@ -65,6 +65,24 @@ const MOCK_EXPENSES: Expense[] = [
     createdAt: '2024-11-19T14:00:00Z',
     lastModifiedAt: '2024-11-19T14:00:00Z',
   },
+  {
+    id: '3',
+    name: 'Restaurant',
+    amount: 85.00,
+    date: '2024-10-15T18:00:00Z',
+    categoryId: '1',
+    createdAt: '2024-10-15T18:00:00Z',
+    lastModifiedAt: '2024-10-15T18:00:00Z',
+  },
+  {
+    id: '4',
+    name: 'Cinema Tickets',
+    amount: 45.00,
+    date: '2024-12-01T20:00:00Z',
+    categoryId: '3',
+    createdAt: '2024-12-01T20:00:00Z',
+    lastModifiedAt: '2024-12-01T20:00:00Z',
+  },
 ];
 
 @Injectable({ providedIn: 'root' })
