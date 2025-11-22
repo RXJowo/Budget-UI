@@ -10,14 +10,30 @@ import {
   IonFab, 
   IonFabButton, 
   IonFooter, 
-  IonButtons, 
+  IonButtons,
   IonButton,
+  IonLabel,
   ModalController 
 } from '@ionic/angular/standalone';
 import { ReactiveFormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
-import { add, alertCircleOutline, arrowBack, arrowForward, pricetag, search, swapVertical } from 'ionicons/icons';
-import ExpenseModalComponent from '../expense-modal/expense-modal.component';
+import { 
+  add, 
+  alertCircleOutline, 
+  arrowBack, 
+  arrowForward, 
+  pricetag, 
+  search, 
+  swapVertical,
+  createOutline,
+  trashOutline,
+  close,
+  checkmark,
+  textOutline,
+  cashOutline,
+  calendarOutline,
+  chevronForwardOutline, chevronDown } from 'ionicons/icons';
+import { ExpenseModalComponent } from '../expense-modal/expense-modal.component';
 
 @Component({
   selector: 'app-expense-list',
@@ -35,7 +51,8 @@ import ExpenseModalComponent from '../expense-modal/expense-modal.component';
     IonFabButton,
     IonFooter,
     IonButtons,
-    IonButton
+    IonButton,
+    IonLabel
   ]
 })
 export default class ExpenseListComponent {
@@ -44,12 +61,14 @@ export default class ExpenseListComponent {
 
   // State
   date = set(new Date(), { date: 1 });
+  sortLabel = 'Date (newest first)';
+  filterLabel = 'All';
 
   // Lifecycle
 
   constructor() {
     // Add all used Ionic icons
-    addIcons({ swapVertical, pricetag, search, alertCircleOutline, add, arrowBack, arrowForward });
+    addIcons({swapVertical,chevronDown,pricetag,search,alertCircleOutline,add,arrowBack,arrowForward,createOutline,trashOutline,close,checkmark,textOutline,cashOutline,calendarOutline,chevronForwardOutline});
   }
 
   // Actions
@@ -59,18 +78,49 @@ export default class ExpenseListComponent {
   };
 
   async openExpenseModal(): Promise<void> {
-    const modal = await this.modalCtrl.create({
-      component: ExpenseModalComponent
-    });
+    console.log('openExpenseModal called'); // Debug log
     
-    modal.present();
-    
-    const { data, role } = await modal.onWillDismiss();
-    
-    if (role === 'save') {
-      console.log('Expense saved:', data);
-    } else if (role === 'delete') {
-      console.log('Expense deleted');
+    try {
+      const modal = await this.modalCtrl.create({
+        component: ExpenseModalComponent
+      });
+      
+      console.log('Modal created:', modal); // Debug log
+      
+      await modal.present();
+      
+      console.log('Modal presented'); // Debug log
+      
+      const { data, role } = await modal.onWillDismiss();
+      
+      if (role === 'save') {
+        console.log('Expense saved:', data);
+      } else if (role === 'delete') {
+        console.log('Expense deleted');
+      }
+    } catch (error) {
+      console.error('Error opening modal:', error);
     }
+  }
+
+  toggleSort(): void {
+    // Toggle between different sort options
+    if (this.sortLabel === 'Date (newest first)') {
+      this.sortLabel = 'Date (oldest first)';
+    } else if (this.sortLabel === 'Date (oldest first)') {
+      this.sortLabel = 'Amount (high to low)';
+    } else {
+      this.sortLabel = 'Date (newest first)';
+    }
+  }
+
+  toggleFilter(): void {
+    // Placeholder for filter functionality
+    console.log('Toggle filter');
+  }
+
+  openSearch(): void {
+    // Placeholder for search functionality
+    console.log('Open search');
   }
 }

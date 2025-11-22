@@ -1,84 +1,109 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { 
   IonHeader, 
   IonToolbar, 
-  IonTitle, 
   IonButtons, 
   IonButton, 
+  IonIcon, 
+  IonTitle, 
   IonContent, 
   IonList, 
   IonItem, 
   IonInput, 
   IonLabel, 
-  IonNote, 
-  IonIcon, 
-  IonFooter,
-  IonDatetime,
-  IonDatetimeButton,
+  IonDatetime, 
+  IonDatetimeButton, 
   IonModal,
-  ModalController 
+  ModalController
 } from '@ionic/angular/standalone';
-import { ReactiveFormsModule } from '@angular/forms';
-import { addIcons } from 'ionicons';
-import { add, calendar, cash, close, pricetag, save, text, trash } from 'ionicons/icons';
-import CategoryModalComponent from '../../category/category-modal/category-modal.component';
+
+interface Category {
+  name: string;
+  color: string;
+  icon: string;
+}
 
 @Component({
   selector: 'app-expense-modal',
   templateUrl: './expense-modal.component.html',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
+    FormsModule,
     IonHeader,
     IonToolbar,
-    IonTitle,
     IonButtons,
     IonButton,
+    IonIcon,
+    IonTitle,
     IonContent,
     IonList,
     IonItem,
     IonInput,
     IonLabel,
-    IonNote,
-    IonIcon,
-    IonFooter,
     IonDatetime,
     IonDatetimeButton,
     IonModal
   ]
 })
-export default class ExpenseModalComponent {
-  // DI
-  private readonly modalCtrl = inject(ModalController);
+export class ExpenseModalComponent implements OnInit {
+  private modalController = inject(ModalController);
+  
+  currentDate: string = new Date().toISOString();
+  selectedCategory: Category | null = null;
+  
+  // Form data
+  expenseName: string = '';
+  expenseAmount: number | null = null;
 
-  // State
-  currentDate = new Date().toISOString();
-
-  // Lifecycle
-
-  constructor() {
-    // Add all used Ionic icons
-    addIcons({ close, save, text, pricetag, add, cash, calendar, trash });
+  ngOnInit() {
+    // Initialize with current date
+    this.currentDate = new Date().toISOString();
   }
 
-  // Actions
-
-  cancel(): void {
-    this.modalCtrl.dismiss(null, 'cancel');
+  async showCategoryModal() {
+    // TODO: Implement category selection modal
+    // For now, just set a default category as an example
+    this.selectedCategory = {
+      name: 'Food & Dining',
+      color: '#FF6B6B',
+      icon: 'restaurant'
+    };
+    
+    console.log('Show category modal - implement category selection here');
+    
+    // Example of how you might open a category selection modal:
+    // const modal = await this.modalController.create({
+    //   component: CategorySelectorComponent,
+    //   breakpoints: [0, 0.5, 0.75, 1],
+    //   initialBreakpoint: 0.75
+    // });
+    // await modal.present();
+    // const { data } = await modal.onWillDismiss();
+    // if (data) {
+    //   this.selectedCategory = data;
+    // }
   }
 
-  save(): void {
-    this.modalCtrl.dismiss(null, 'save');
+  async cancel() {
+    await this.modalController.dismiss(null, 'cancel');
   }
 
-  delete(): void {
-    this.modalCtrl.dismiss(null, 'delete');
-  }
-
-  async showCategoryModal(): Promise<void> {
-    const categoryModal = await this.modalCtrl.create({ component: CategoryModalComponent });
-    categoryModal.present();
-    const { role } = await categoryModal.onWillDismiss();
-    console.log('role', role);
+  async save() {
+    // Validate form data
+    if (!this.expenseName || !this.selectedCategory || !this.expenseAmount) {
+      console.warn('Please fill in all required fields');
+      // TODO: Show an alert or toast for validation
+      return;
+    }
+    
+    const expenseData = {
+      name: this.expenseName,
+      category: this.selectedCategory,
+      amount: this.expenseAmount,
+      date: this.currentDate
+    };
+    
+    await this.modalController.dismiss(expenseData, 'save');
   }
 }

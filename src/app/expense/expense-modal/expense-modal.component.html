@@ -1,76 +1,213 @@
-<ion-header>
+<ion-header [translucent]="false">
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-button (click)="cancel()">
-        <ion-icon name="close" slot="icon-only"></ion-icon>
+      <ion-button (click)="cancel()" fill="clear">
+        <ion-icon name="close" slot="start"></ion-icon>
         CANCEL
       </ion-button>
     </ion-buttons>
+
     <ion-title>Add Expense</ion-title>
+
     <ion-buttons slot="end">
-      <ion-button (click)="save()">
-        <ion-icon name="save" slot="icon-only"></ion-icon>
+      <ion-button (click)="save()" fill="clear">
+        <ion-icon name="checkmark" slot="start"></ion-icon>
         SAVE
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <ion-list>
-    <!-- Name Input -->
-    <ion-item>
-      <ion-icon name="text" slot="start"></ion-icon>
-      <ion-input 
-        label="Name" 
-        labelPlacement="floating"
-        placeholder="Enter expense name">
+<ion-content [fullscreen]="true" class="dark-content">
+  <ion-list lines="none" class="expense-form">
+
+    <!-- Name -->
+    <ion-item class="form-item">
+      <ion-icon name="text-outline" slot="start" class="item-icon"></ion-icon>
+      <ion-label class="field-label">Name</ion-label>
+      <ion-input
+        [(ngModel)]="expenseName"
+        class="field-input"
+        placeholder="">
       </ion-input>
     </ion-item>
 
-    <!-- Category Selection -->
-    <ion-item button (click)="showCategoryModal()">
-      <ion-icon name="pricetag" slot="start"></ion-icon>
-      <ion-label>Category</ion-label>
-      <ion-icon name="add" slot="end" color="primary"></ion-icon>
+    <!-- Category -->
+    <ion-item button class="form-item" (click)="showCategoryModal()">
+      <ion-icon name="pricetag" slot="start" class="item-icon"></ion-icon>
+      <ion-label class="field-label">Category</ion-label>
+      <div class="field-value">
+        <span class="category-text">
+          {{ selectedCategory?.name || 'Select' }}
+        </span>
+        <ion-icon name="chevron-down" class="dropdown-icon"></ion-icon>
+      </div>
+      <ion-button fill="clear" slot="end" class="add-button" (click)="showCategoryModal(); $event.stopPropagation()">
+        <ion-icon name="add" slot="icon-only"></ion-icon>
+      </ion-button>
     </ion-item>
 
-    <!-- Amount Input -->
-    <ion-item>
-      <ion-icon name="cash" slot="start"></ion-icon>
-      <ion-input 
-        label="Amount" 
-        labelPlacement="floating"
+    <!-- Amount -->
+    <ion-item class="form-item">
+      <ion-icon name="cash-outline" slot="start" class="item-icon"></ion-icon>
+      <ion-label class="field-label">Amount</ion-label>
+      <ion-input
+        [(ngModel)]="expenseAmount"
+        class="field-input"
         type="number"
-        placeholder="0.00">
+        inputmode="decimal"
+        placeholder="">
       </ion-input>
-      <ion-note slot="end">CHF</ion-note>
+      <div slot="end" class="currency-label">CHF</div>
     </ion-item>
 
-    <!-- Date Picker -->
-    <ion-item>
-      <ion-icon name="calendar" slot="start"></ion-icon>
-      <ion-datetime-button datetime="expense-date"></ion-datetime-button>
+    <!-- Date -->
+    <ion-item class="form-item">
+      <ion-icon name="calendar-outline" slot="start" class="item-icon"></ion-icon>
+      <ion-label class="field-label">Date</ion-label>
+      <ion-datetime-button datetime="expense-date" class="date-button"></ion-datetime-button>
     </ion-item>
+
   </ion-list>
 
-  <!-- DateTime Modal -->
+  <!-- Date picker -->
   <ion-modal [keepContentsMounted]="true">
     <ng-template>
-      <ion-datetime 
-        id="expense-date" 
+      <ion-datetime
+        id="expense-date"
         presentation="date"
-        [value]="currentDate">
+        [(ngModel)]="currentDate"
+        [showDefaultButtons]="true">
       </ion-datetime>
     </ng-template>
   </ion-modal>
 </ion-content>
 
-<ion-footer>
-  <ion-toolbar>
-    <ion-button expand="full" color="danger" (click)="delete()">
-      <ion-icon name="trash" slot="start"></ion-icon>
-      Delete Expense
-    </ion-button>
-  </ion-toolbar>
-</ion-footer>
+<style>
+
+
+  /* Header */
+  ion-header ion-toolbar {
+    padding: 4px 0;
+  }
+
+  ion-header ion-title {
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  ion-header ion-button {
+    font-size: 14px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  ion-header ion-button ion-icon {
+    font-size: 20px;
+    margin-right: 6px;
+  }
+
+  /* List layout */
+  .expense-form {
+    padding: 0;
+    background: transparent;
+    margin-top: 8px;
+  }
+
+  .form-item {
+    --inner-padding-start: 16px;
+    --inner-padding-end: 16px;
+    --padding-start: 16px;
+    --padding-end: 16px;
+    --min-height: 56px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .item-icon {
+    font-size: 24px;
+    margin-right: 16px;
+    flex-shrink: 0;
+  }
+
+  /* Label on the left */
+  .field-label {
+    font-size: 16px;
+    margin: 0;
+    flex-shrink: 0;
+    min-width: 90px;
+  }
+
+  /* Input fields - align right */
+  .field-input {
+    --padding-start: 0;
+    --padding-end: 0;
+    --padding-top: 0;
+    --padding-bottom: 0;
+    font-size: 16px;
+    text-align: right;
+    flex: 1;
+  }
+
+  ion-input::part(native) {
+    padding: 0 !important;
+  }
+
+  /* Category field */
+  .field-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .category-text {
+    font-size: 16px;
+  }
+
+  .dropdown-icon {
+    font-size: 16px;
+  }
+
+  /* Add button for category */
+  .add-button {
+    --border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    margin-left: 12px;
+  }
+
+  .add-button ion-icon {
+    font-size: 20px;
+  }
+
+  /* Currency label */
+  .currency-label {
+    font-size: 16px;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Date button */
+  .date-button {
+    margin-left: auto;
+  }
+
+  ion-datetime-button::part(native) {
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 15px;
+    font-weight: 400;
+  }
+
+  @media (min-width: 768px) {
+    .expense-form {
+      max-width: 600px;
+      margin: 8px auto 0;
+    }
+  }
+</style>
