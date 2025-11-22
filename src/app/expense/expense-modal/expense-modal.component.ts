@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, inject } from '@angular/core';
+import { Component, OnInit, Input, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { 
   IonHeader, 
@@ -17,6 +17,7 @@ import {
   IonModal,
   ModalController
 } from '@ionic/angular/standalone';
+import { ViewDidEnter } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
   closeOutline,
@@ -67,11 +68,12 @@ interface Expense {
     IonModal
   ]
 })
-export class ExpenseModalComponent implements OnInit {
+export class ExpenseModalComponent implements OnInit, ViewDidEnter {
   private modalController = inject(ModalController);
   private formBuilder = inject(FormBuilder);
   
   @Input() expense?: Expense;
+  @ViewChild('nameInput') nameInput?: IonInput;
   
   selectedCategory: Category | null = null;
   
@@ -117,6 +119,13 @@ export class ExpenseModalComponent implements OnInit {
         };
       }
     }
+  }
+
+  ionViewDidEnter(): void {
+    // Focus the name input when modal is fully opened
+    setTimeout(() => {
+      this.nameInput?.setFocus();
+    }, 300);
   }
 
   async showCategoryModal() {
