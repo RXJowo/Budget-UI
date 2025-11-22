@@ -29,6 +29,9 @@ import {
   calendarOutline
 } from 'ionicons/icons';
 
+// Import CategoryModalComponent
+import CategoryModalComponent from '../../category/category-modal/category-modal.component';
+
 interface Category {
   id: string;
   name: string;
@@ -94,26 +97,31 @@ export class ExpenseModalComponent implements OnInit {
   }
 
   async showCategoryModal() {
-    // TODO: Implement category selection modal
-    // For now, just set a default category as an example
-    this.selectedCategory = {
-      id: '1',
-      name: 'Food & Dining'
-    };
+    console.log('Opening category modal...');
     
-    console.log('Show category modal - implement category selection here');
+    const modal = await this.modalController.create({
+      component: CategoryModalComponent,
+      componentProps: {
+        category: {} // Empty object for new category
+      }
+    });
     
-    // Example of how you might open a category selection modal:
-    // const modal = await this.modalController.create({
-    //   component: CategorySelectorComponent,
-    //   breakpoints: [0, 0.5, 0.75, 1],
-    //   initialBreakpoint: 0.75
-    // });
-    // await modal.present();
-    // const { data } = await modal.onWillDismiss();
-    // if (data) {
-    //   this.selectedCategory = data;
-    // }
+    await modal.present();
+    
+    const { data, role } = await modal.onWillDismiss();
+    
+    console.log('Category modal dismissed with role:', role, 'data:', data);
+    
+    // If user saved a category (role is 'refresh' from CategoryModalComponent)
+    if (role === 'refresh' && data) {
+      // Set the newly created or selected category
+      this.selectedCategory = {
+        id: data.id,
+        name: data.name
+      };
+      console.log('Category selected:', this.selectedCategory);
+    }
+    // If cancelled, expense modal just continues (no action needed)
   }
 
   async cancel() {

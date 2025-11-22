@@ -108,7 +108,18 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
               next: () => {
                 console.log('✅ Category saved successfully');
                 this.toastService.displaySuccessToast('Category saved');
-                this.modalCtrl.dismiss(null, 'refresh');
+                
+                // Return the category from form (with ID if exists, or generate temp ID)
+                const savedCategory: Category = {
+                  id: category.id || Date.now().toString(), // Use existing ID or generate temp ID
+                  name: category.name,
+                  color: category.color,
+                  createdAt: new Date().toISOString(),
+                  lastModifiedAt: new Date().toISOString()
+                };
+                
+                console.log('Returning category:', savedCategory);
+                this.modalCtrl.dismiss(savedCategory, 'refresh');
               },
               error: (error: any) => {
                 console.error('❌ Error saving category:', error);
