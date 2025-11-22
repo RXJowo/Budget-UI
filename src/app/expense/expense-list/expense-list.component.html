@@ -90,7 +90,7 @@
                   <h2>{{ expense.name }}</h2>
                   <p>
                     <ion-icon name="pricetag" />
-                    {{ expense.category?.name || 'No category' }}
+                    {{ getCategoryName(expense.categoryId) }}
                   </p>
                 </ion-label>
                 <div slot="end" class="amount">

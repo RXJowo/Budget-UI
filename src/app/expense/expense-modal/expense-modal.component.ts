@@ -38,6 +38,7 @@ import CategoryModalComponent from '../../category/category-modal/category-modal
 // Import Services
 import { LoadingIndicatorService } from '../../shared/service/loading-indicator.service';
 import { ToastService } from '../../shared/service/toast.service';
+import { ExpenseService, ExpenseUpsertDto } from '../expense.service';
 
 interface Category {
   id: string;
@@ -80,6 +81,7 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
   private formBuilder = inject(FormBuilder);
   private loadingIndicatorService = inject(LoadingIndicatorService);
   private toastService = inject(ToastService);
+  private expenseService = inject(ExpenseService);
   
   @Input() expense?: Expense;
   @ViewChild('nameInput') nameInput?: IonInput;
@@ -196,7 +198,7 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
         const formValue = this.expenseForm.value;
         
         // Category is optional - only include if set
-        const expenseData: Expense = {
+        const expenseData: ExpenseUpsertDto = {
           id: this.expense?.id,
           name: formValue.name!,
           amount: formValue.amount!,
@@ -206,16 +208,25 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
         
         console.log('Saving expense:', expenseData);
         
-        // TODO: Replace with actual API call
-        // Simulate API delay
-        setTimeout(() => {
-          loadingIndicator.dismiss();
-          this.loading = false;
-          this.expenseForm.enable();
-          
-          this.toastService.displaySuccessToast('Expense saved');
-          this.modalController.dismiss(expenseData, 'save');
-        }, 1000);
+        // Use ExpenseService to save
+        this.expenseService
+          .upsertExpense(expenseData)
+          .pipe(finalize(() => {
+            loadingIndicator.dismiss();
+            this.loading = false;
+            this.expenseForm.enable();
+          }))
+          .subscribe({
+            next: () => {
+              console.log('✅ Expense saved successfully');
+              this.toastService.displaySuccessToast('Expense saved');
+              this.modalController.dismiss(expenseData, 'save');
+            },
+            error: (error: any) => {
+              console.error('❌ Error saving expense:', error);
+              this.toastService.displayWarningToast('Could not save expense', error);
+            }
+          });
       });
   }
   

@@ -43,19 +43,8 @@ import {
   trash
 } from 'ionicons/icons';
 import { ExpenseModalComponent } from '../expense-modal/expense-modal.component';
-
-interface Category {
-  id: string;
-  name: string;
-}
-
-interface Expense {
-  id: string;
-  name: string;
-  amount: number;
-  date: Date;
-  category?: Category;
-}
+import { ExpenseService, Expense, ExpenseCriteria } from '../expense.service';
+import { CategoryService, Category } from '../../category/category.service';
 
 interface SortOption {
   label: string;
@@ -97,6 +86,8 @@ interface SortOption {
 export default class ExpenseListComponent implements OnInit {
   // DI
   private readonly modalCtrl = inject(ModalController);
+  private readonly expenseService = inject(ExpenseService);
+  private readonly categoryService = inject(CategoryService);
 
   // State
   date = set(new Date(), { date: 1 });
@@ -104,6 +95,13 @@ export default class ExpenseListComponent implements OnInit {
   categories: Category[] = [];
   loading = false;
   lastPageReached = false;
+  
+  // Pagination
+  searchCriteria: ExpenseCriteria = {
+    page: 0,
+    size: 25,
+    sort: 'date,desc'
+  };
 
   // Search Form
   searchForm = new FormGroup({
@@ -149,55 +147,45 @@ export default class ExpenseListComponent implements OnInit {
 
   // Data Loading
 
-  private async loadExpenses(): Promise<void> {
+  private loadExpenses(): void {
     this.loading = true;
     
-    try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Mock data
-      const mockExpenses: Expense[] = [
-        {
-          id: '1',
-          name: 'Grocery Shopping',
-          amount: 125.50,
-          date: new Date(2025, 10, 20),
-          category: { id: '1', name: 'Food & Dining' }
-        },
-        {
-          id: '2',
-          name: 'Gas Station',
-          amount: 65.00,
-          date: new Date(2025, 10, 20),
-          category: { id: '2', name: 'Transportation' }
-        }
-      ];
-      
-      this.expenses = mockExpenses;
-      
-    } catch (error) {
-      console.error('Error loading expenses:', error);
-      this.expenses = [];
-    } finally {
-      this.loading = false;
-    }
+    // Update search criteria with current filters
+    this.searchCriteria = {
+      ...this.searchCriteria,
+      name: this.searchForm.value.name || undefined,
+      categoryId: this.searchForm.value.category || undefined,
+      page: 0 // Reset to first page
+    };
+    
+    console.log('Loading expenses with criteria:', this.searchCriteria);
+    
+    this.expenseService.getExpenses(this.searchCriteria).subscribe({
+      next: (page) => {
+        console.log('✅ Expenses loaded:', page);
+        this.expenses = page.content;
+        this.lastPageReached = page.last;
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('❌ Error loading expenses:', error);
+        this.expenses = [];
+        this.loading = false;
+      }
+    });
   }
 
-  private async loadCategories(): Promise<void> {
-    try {
-      // TODO: Replace with actual API call
-      const mockCategories: Category[] = [
-        { id: '1', name: 'Food & Dining' },
-        { id: '2', name: 'Transportation' },
-        { id: '3', name: 'Shopping' }
-      ];
-      
-      this.categories = mockCategories;
-    } catch (error) {
-      console.error('Error loading categories:', error);
-      this.categories = [];
-    }
+  private loadCategories(): void {
+    this.categoryService.getAllCategories({ sort: 'name,asc' }).subscribe({
+      next: (categories) => {
+        console.log('✅ Categories loaded:', categories);
+        this.categories = categories;
+      },
+      error: (error) => {
+        console.error('❌ Error loading categories:', error);
+        this.categories = [];
+      }
+    });
   }
 
   private resetAndLoadExpenses(): void {
@@ -208,25 +196,42 @@ export default class ExpenseListComponent implements OnInit {
 
   // Actions
 
-  async reloadExpenses(event: RefresherCustomEvent): Promise<void> {
-    await this.resetAndLoadExpenses();
+  reloadExpenses(event: RefresherCustomEvent): void {
+    this.searchCriteria.page = 0;
+    this.loadExpenses();
     event.target.complete();
   }
 
-  async loadNextExpensePage(event: InfiniteScrollCustomEvent): Promise<void> {
-    try {
-      // TODO: Load next page from API
-      this.lastPageReached = true;
-    } catch (error) {
-      console.error('Error loading next page:', error);
-    } finally {
-      event.target.complete();
-    }
+  loadNextExpensePage(event: InfiniteScrollCustomEvent): void {
+    this.searchCriteria.page++;
+    
+    this.expenseService.getExpenses(this.searchCriteria).subscribe({
+      next: (page) => {
+        console.log('✅ Next page loaded:', page);
+        if (this.expenses) {
+          this.expenses.push(...page.content);
+        } else {
+          this.expenses = page.content;
+        }
+        this.lastPageReached = page.last;
+        event.target.complete();
+      },
+      error: (error) => {
+        console.error('❌ Error loading next page:', error);
+        event.target.complete();
+      }
+    });
   }
 
   addMonths(number: number): void {
     this.date = addMonths(this.date, number);
-    this.resetAndLoadExpenses();
+    this.loadExpenses();
+  }
+
+  getCategoryName(categoryId?: string): string {
+    if (!categoryId) return 'No category';
+    const category = this.categories.find(c => c.id === categoryId);
+    return category?.name || 'Unknown category';
   }
 
   async openExpenseModal(): Promise<void> {
@@ -240,10 +245,10 @@ export default class ExpenseListComponent implements OnInit {
     
     if (role === 'save') {
       console.log('Expense saved:', data);
-      await this.resetAndLoadExpenses();
+      this.loadExpenses(); // Reload list after save
     } else if (role === 'delete') {
       console.log('Expense deleted');
-      await this.resetAndLoadExpenses();
+      this.loadExpenses(); // Reload list after delete
     }
   }
 
@@ -258,7 +263,7 @@ export default class ExpenseListComponent implements OnInit {
     const { data, role } = await modal.onWillDismiss();
     
     if (role === 'save' || role === 'delete') {
-      await this.resetAndLoadExpenses();
+      this.loadExpenses(); // Reload list after save or delete
     }
   }
 }
