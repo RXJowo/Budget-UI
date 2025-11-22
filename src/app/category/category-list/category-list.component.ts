@@ -1,4 +1,5 @@
 import { Component, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ModalController } from '@ionic/angular/standalone';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
@@ -7,9 +8,9 @@ import CategoryModalComponent from '../category-modal/category-modal.component';
 // DIREKTE Imports aus dem CategoryService - NICHT aus shared/domain
 import { Category, CategoryCriteria, Page, CategoryService } from '../category.service';
 import { ToastService } from '../../shared/service/toast.service';
-import { debounce, finalize, interval, Subscription } from 'rxjs';
-import { ViewDidEnter, ViewDidLeave } from '@ionic/angular';
-import { InfiniteScrollCustomEvent, RefresherCustomEvent } from '@ionic/angular';
+import { debounce, interval, Subscription } from 'rxjs';
+import { ViewDidEnter, ViewDidLeave } from '@ionic/angular/standalone';
+import { InfiniteScrollCustomEvent, RefresherCustomEvent } from '@ionic/angular/standalone';
 
 // Lokale Interface für SortOptions
 interface SortOption {
@@ -179,7 +180,7 @@ export default class CategoryListComponent implements ViewDidEnter, ViewDidLeave
             next();
           }
         },
-        error: (error: any) => {
+        error: (error: unknown) => {
           console.error('❌ Error loading categories in component:', error);
           
           // Clear timeout
@@ -189,7 +190,7 @@ export default class CategoryListComponent implements ViewDidEnter, ViewDidLeave
           console.log('Setting loading = false (error)');
           this.loading = false;
           
-          this.toastService.displayWarningToast('Could not load categories', error);
+          this.toastService.displayWarningToast('Could not load categories', error as HttpErrorResponse);
           
           if (next) {
             console.log('Calling next() callback after error');

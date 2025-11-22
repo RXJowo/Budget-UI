@@ -2,11 +2,11 @@
   <ion-toolbar>
     <ion-buttons slot="start">
       <ion-button 
-        [disabled]="loading"
-        (click)="cancel()" 
         fill="clear" 
-        color="medium">
-        <ion-icon name="close-outline" slot="start"></ion-icon>
+        color="medium"
+        [disabled]="loading"
+        (click)="cancel()">
+        <ion-icon name="close-outline" slot="start" />
         CANCEL
       </ion-button>
     </ion-buttons>
@@ -15,14 +15,14 @@
 
     <ion-buttons slot="end">
       <ion-button 
-        [disabled]="expenseForm.invalid || loading" 
-        (click)="save()" 
         fill="clear" 
-        color="medium">
+        color="medium"
+        [disabled]="expenseForm.invalid || loading" 
+        (click)="save()">
         @if (loading) {
-          <ion-spinner name="crescent"></ion-spinner>
+          <ion-spinner name="crescent" />
         } @else {
-          <ion-icon name="save-outline" slot="start"></ion-icon>
+          <ion-icon name="save-outline" slot="start" />
           SAVE
         }
       </ion-button>
@@ -35,14 +35,13 @@
 
     <!-- Name -->
     <ion-item class="form-item">
-      <ion-icon name="text-outline" slot="start" class="item-icon"></ion-icon>
+      <ion-icon name="text-outline" slot="start" class="item-icon" />
       <ion-input
         #nameInput
         formControlName="name"
         class="item-input"
         placeholder="Name"
-        [clearInput]="true">
-      </ion-input>
+        [clearInput]="true" />
     </ion-item>
     
     <!-- Name Validation Errors -->
@@ -59,7 +58,7 @@
 
     <!-- Category -->
     <ion-item class="form-item">
-      <ion-icon name="pricetag-outline" slot="start" class="item-icon"></ion-icon>
+      <ion-icon name="pricetag-outline" slot="start" class="item-icon" />
       <ion-select
         interface="popover"
         placeholder="Category (optional)"
@@ -78,21 +77,20 @@
         class="add-button" 
         [disabled]="loading"
         (click)="createNewCategory()">
-        <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+        <ion-icon name="add-outline" slot="icon-only" />
       </ion-button>
     </ion-item>
 
     <!-- Amount -->
     <ion-item class="form-item">
-      <ion-icon name="cash-outline" slot="start" class="item-icon"></ion-icon>
+      <ion-icon name="cash-outline" slot="start" class="item-icon" />
       <ion-input
         formControlName="amount"
         class="item-input"
         type="number"
         inputmode="decimal"
         placeholder="Amount"
-        [clearInput]="true">
-      </ion-input>
+        [clearInput]="true" />
       <ion-label slot="end" class="currency-label">CHF</ion-label>
     </ion-item>
     
@@ -110,8 +108,8 @@
 
     <!-- Date -->
     <ion-item class="form-item">
-      <ion-icon name="calendar-outline" slot="start" class="item-icon"></ion-icon>
-      <ion-datetime-button datetime="expense-date" class="date-button"></ion-datetime-button>
+      <ion-icon name="calendar-outline" slot="start" class="item-icon" />
+      <ion-datetime-button datetime="expense-date" class="date-button" />
     </ion-item>
 
   </ion-list>
@@ -123,8 +121,7 @@
         id="expense-date"
         presentation="date"
         formControlName="date"
-        [showDefaultButtons]="true">
-      </ion-datetime>
+        [showDefaultButtons]="true" />
     </ng-template>
   </ion-modal>
 </ion-content>
@@ -138,7 +135,7 @@
         color="danger" 
         [disabled]="loading"
         (click)="deleteExpense()">
-        <ion-icon name="trash-outline" slot="start"></ion-icon>
+        <ion-icon name="trash-outline" slot="start" />
         DELETE EXPENSE
       </ion-button>
     </ion-toolbar>

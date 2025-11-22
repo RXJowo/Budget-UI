@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import {
   BehaviorSubject,
   delay,
@@ -114,7 +114,7 @@ export class CategoryService {
   /**
    * Erzeugt die Standard-HTTP-Headers mit Authorization
    */
-  private getAuthHeaders(): { [header: string]: string } {
+  private getAuthHeaders(): Record<string, string> {
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.authToken}`
@@ -145,13 +145,13 @@ export class CategoryService {
       tap((result: Page<Category>) => {
         console.log('✅ getCategories backend success:', result);
       }),
-      catchError((error: any) => {
+      catchError((error: unknown) => {
         console.error('❌ getCategories backend error:', error);
         console.error('Error details:', {
-          status: error.status,
-          statusText: error.statusText,
-          message: error.message,
-          url: error.url
+          status: (error as HttpErrorResponse).status,
+          statusText: (error as HttpErrorResponse).statusText,
+          message: (error as HttpErrorResponse).message,
+          url: (error as HttpErrorResponse).url
         });
         console.warn('Falling back to mock data due to backend error');
         return this.getMockCategories(pagingCriteria);
@@ -188,7 +188,7 @@ export class CategoryService {
     
     return this.httpClient.get<Category[]>(url, { params, headers }).pipe(
       tap((result: Category[]) => console.log('✅ getAllCategories backend success:', result)),
-      catchError((error: any) => {
+      catchError((error: unknown) => {
         console.error('❌ getAllCategories backend error:', error);
         console.warn('Falling back to mock data');
         return this.getMockAllCategories(sortCriteria);
@@ -217,7 +217,7 @@ export class CategoryService {
     
     return this.httpClient.put<void>(this.apiUrl, category, { headers }).pipe(
       tap(() => console.log('✅ upsertCategory backend success!')),
-      catchError((error: any) => {
+      catchError((error: unknown) => {
         console.error('❌ upsertCategory backend error:', error);
         console.warn('Falling back to mock upsert');
         return this.mockUpsertCategory(category);
@@ -246,7 +246,7 @@ export class CategoryService {
     
     return this.httpClient.delete<void>(url, { headers }).pipe(
       tap(() => console.log('✅ deleteCategory backend success!')),
-      catchError((error: any) => {
+      catchError((error: unknown) => {
         console.error('❌ deleteCategory backend error:', error);
         console.warn('Falling back to mock delete');
         return this.mockDeleteCategory(id);

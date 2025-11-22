@@ -306,7 +306,7 @@ export default class ExpenseListComponent implements OnInit {
     
     await modal.present();
     
-    const { data, role } = await modal.onWillDismiss();
+    const { role } = await modal.onWillDismiss();
     
     if (role === 'save' || role === 'delete') {
       this.loadExpenses(); // Reload list after save or delete

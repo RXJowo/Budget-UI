@@ -1,5 +1,6 @@
 import { Component, OnInit, Input, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { 
   IonHeader, 
   IonToolbar, 
@@ -22,7 +23,7 @@ import {
   ModalController,
   AlertController
 } from '@ionic/angular/standalone';
-import { ViewDidEnter } from '@ionic/angular';
+import { ViewDidEnter } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   closeOutline,
@@ -245,7 +246,7 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
     // Validate form
     if (this.expenseForm.invalid) {
       console.warn('Form is invalid:', this.getFormErrors());
-      this.toastService.displayWarningToast('Please fill in all required fields', null as any);
+      this.toastService.displayWarningToast('Please fill in all required fields', undefined!);
       return;
     }
 
@@ -282,9 +283,9 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
               this.toastService.displaySuccessToast('Expense saved');
               this.modalController.dismiss(expenseData, 'save');
             },
-            error: (error: any) => {
+            error: (error: unknown) => {
               console.error('❌ Error saving expense:', error);
-              this.toastService.displayWarningToast('Could not save expense', error);
+              this.toastService.displayWarningToast('Could not save expense', error as HttpErrorResponse);
             }
           });
       });
@@ -343,16 +344,16 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
               this.toastService.displaySuccessToast('Expense deleted');
               this.modalController.dismiss(null, 'delete');
             },
-            error: (error: any) => {
+            error: (error: unknown) => {
               console.error('❌ Error deleting expense:', error);
-              this.toastService.displayWarningToast('Could not delete expense', error);
+              this.toastService.displayWarningToast('Could not delete expense', error as HttpErrorResponse);
             }
           });
       });
   }
   
-  private getFormErrors(): any {
-    const errors: any = {};
+  private getFormErrors(): Record<string, unknown> {
+    const errors: Record<string, unknown> = {};
     Object.keys(this.expenseForm.controls).forEach(key => {
       const control = this.expenseForm.get(key);
       if (control?.errors) {

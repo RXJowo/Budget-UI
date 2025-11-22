@@ -1,10 +1,11 @@
 import { Component, inject, ViewChild } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ModalController } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { close, save, text, trash } from 'ionicons/icons';
 import { finalize, mergeMap } from 'rxjs';
-import { ViewDidEnter, ViewWillEnter } from '@ionic/angular';
+import { ViewDidEnter, ViewWillEnter } from '@ionic/angular/standalone';
 import { IonInput } from '@ionic/angular/standalone';
 
 //Imports aus CategoryService
@@ -121,9 +122,9 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
                 console.log('Returning category:', savedCategory);
                 this.modalCtrl.dismiss(savedCategory, 'refresh');
               },
-              error: (error: any) => {
+              error: (error: unknown) => {
                 console.error('❌ Error saving category:', error);
-                this.toastService.displayWarningToast('Could not save category', error);
+                this.toastService.displayWarningToast('Could not save category', error as HttpErrorResponse);
               }
             });
         });
@@ -158,16 +159,16 @@ export default class CategoryModalComponent implements ViewDidEnter, ViewWillEnt
               this.toastService.displaySuccessToast('Category deleted');
               this.modalCtrl.dismiss(null, 'refresh');
             },
-            error: (error: any) => {
+            error: (error: unknown) => {
               console.error('❌ Error deleting category:', error);
-              this.toastService.displayWarningToast('Could not delete category', error);
+              this.toastService.displayWarningToast('Could not delete category', error as HttpErrorResponse);
             }
           });
       });
   }
 
-  private getFormErrors(): any {
-    const errors: any = {};
+  private getFormErrors(): Record<string, unknown> {
+    const errors: Record<string, unknown> = {};
     Object.keys(this.categoryForm.controls).forEach(key => {
       const control = this.categoryForm.get(key);
       if (control?.errors) {

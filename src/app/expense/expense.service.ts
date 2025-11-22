@@ -118,7 +118,7 @@ export class ExpenseService {
   // Backend ein/aus
   private readonly useBackend = false;
 
-  private getAuthHeaders(): { [header: string]: string } {
+  private getAuthHeaders(): Record<string, string> {
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${this.authToken}`
@@ -143,7 +143,7 @@ export class ExpenseService {
       tap((result: Page<Expense>) => {
         console.log('✅ getExpenses backend success:', result);
       }),
-      catchError((error: any) => {
+      catchError((error: unknown) => {
         console.error('❌ getExpenses backend error:', error);
         console.warn('Falling back to mock data');
         return this.getMockExpenses(pagingCriteria);
@@ -166,7 +166,7 @@ export class ExpenseService {
     
     return this.httpClient.put<void>(this.apiUrl, expense, { headers }).pipe(
       tap(() => console.log('✅ upsertExpense backend success!')),
-      catchError((error: any) => {
+      catchError((error: unknown) => {
         console.error('❌ upsertExpense backend error:', error);
         console.warn('Falling back to mock upsert');
         return this.mockUpsertExpense(expense);
@@ -190,7 +190,7 @@ export class ExpenseService {
     
     return this.httpClient.delete<void>(url, { headers }).pipe(
       tap(() => console.log('✅ deleteExpense backend success!')),
-      catchError((error: any) => {
+      catchError((error: unknown) => {
         console.error('❌ deleteExpense backend error:', error);
         console.warn('Falling back to mock delete');
         return this.mockDeleteExpense(id);

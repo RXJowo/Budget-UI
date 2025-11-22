@@ -120,7 +120,7 @@
   <!-- FAB Button -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end">
     <ion-fab-button (click)="openExpenseModal()">
-      <ion-icon name="add"></ion-icon>
+      <ion-icon name="add" />
     </ion-fab-button>
   </ion-fab>
 </ion-content>
@@ -128,14 +128,14 @@
 <ion-footer>
   <ion-toolbar>
     <div class="footer-content">
-      <ion-button fill="clear" (click)="addMonths(-1)" class="month-nav">
-        <ion-icon name="arrow-back" slot="icon-only"></ion-icon>
+      <ion-button fill="clear" class="month-nav" (click)="addMonths(-1)">
+        <ion-icon name="arrow-back" slot="icon-only" />
       </ion-button>
       
       <div class="month-title">{{ date | date: "MMMM yyyy" }}</div>
       
-      <ion-button fill="clear" (click)="addMonths(1)" class="month-nav">
-        <ion-icon name="arrow-forward" slot="icon-only"></ion-icon>
+      <ion-button fill="clear" class="month-nav" (click)="addMonths(1)">
+        <ion-icon name="arrow-forward" slot="icon-only" />
       </ion-button>
     </div>
   </ion-toolbar>
