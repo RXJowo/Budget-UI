@@ -58,18 +58,26 @@
     }
 
     <!-- Category -->
-    <ion-item button class="form-item" [disabled]="loading" (click)="!loading && showCategoryModal()">
+    <ion-item class="form-item">
       <ion-icon name="pricetag-outline" slot="start" class="item-icon"></ion-icon>
-      <ion-label class="category-label">
-        {{ selectedCategory?.name || 'Category' }}
-      </ion-label>
-      <ion-icon name="chevron-down-outline" slot="end" class="chevron-icon"></ion-icon>
+      <ion-select
+        interface="popover"
+        placeholder="Category (optional)"
+        [value]="expenseForm.get('categoryId')?.value"
+        (ionChange)="onCategoryChange($event.detail.value)">
+        <ion-select-option [value]="null">No category</ion-select-option>
+        @for (category of categories; track category.id) {
+          <ion-select-option [value]="category.id">
+            {{ category.name }}
+          </ion-select-option>
+        }
+      </ion-select>
       <ion-button 
         fill="solid" 
         slot="end" 
         class="add-button" 
         [disabled]="loading"
-        (click)="!loading && showCategoryModal(); $event.stopPropagation()">
+        (click)="createNewCategory()">
         <ion-icon name="add-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-item>
@@ -190,15 +198,11 @@
     padding: 0 !important;
   }
 
-  /* Category */
-  .category-label {
-    font-size: 16px;
-    margin: 0;
-  }
-
-  .chevron-icon {
-    font-size: 16px;
-    margin-right: 8px;
+  /* Select */
+  ion-select {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
   }
 
   /* Add button for category */

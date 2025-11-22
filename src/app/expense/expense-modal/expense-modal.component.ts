@@ -11,7 +11,9 @@ import {
   IonList, 
   IonItem, 
   IonInput, 
-  IonLabel, 
+  IonLabel,
+  IonSelect,
+  IonSelectOption,
   IonDatetime, 
   IonDatetimeButton, 
   IonModal,
@@ -32,18 +34,11 @@ import {
 } from 'ionicons/icons';
 import { finalize } from 'rxjs';
 
-// Import CategoryModalComponent
-import CategoryModalComponent from '../../category/category-modal/category-modal.component';
-
-// Import Services
 import { LoadingIndicatorService } from '../../shared/service/loading-indicator.service';
 import { ToastService } from '../../shared/service/toast.service';
 import { ExpenseService, ExpenseUpsertDto } from '../expense.service';
-
-interface Category {
-  id: string;
-  name: string;
-}
+import { CategoryService, Category } from '../../category/category.service';
+import CategoryModalComponent from '../../category/category-modal/category-modal.component';
 
 interface Expense {
   id?: string;
@@ -70,6 +65,8 @@ interface Expense {
     IonItem,
     IonInput,
     IonLabel,
+    IonSelect,
+    IonSelectOption,
     IonDatetime,
     IonDatetimeButton,
     IonModal,
@@ -82,10 +79,12 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
   private loadingIndicatorService = inject(LoadingIndicatorService);
   private toastService = inject(ToastService);
   private expenseService = inject(ExpenseService);
+  private categoryService = inject(CategoryService);
   
   @Input() expense?: Expense;
   @ViewChild('nameInput') nameInput?: IonInput;
   
+  categories: Category[] = [];
   selectedCategory: Category | null = null;
   loading = false;
   
@@ -112,6 +111,9 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
   }
 
   ngOnInit() {
+    // Load categories
+    this.loadCategories();
+    
     // If editing existing expense, populate form
     if (this.expense?.id) {
       this.expenseForm.patchValue({
@@ -123,14 +125,36 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
       
       // Set selected category if exists
       if (this.expense.categoryId) {
-        // TODO: Load category from service
-        // For now, just create a placeholder
+        // Will be set after categories are loaded
         this.selectedCategory = {
           id: this.expense.categoryId,
           name: 'Loading...'
-        };
+        } as Category;
       }
     }
+  }
+
+  private loadCategories(): void {
+    console.log('🔄 Loading categories...');
+    this.categoryService.getAllCategories({ sort: 'name,asc' }).subscribe({
+      next: (categories) => {
+        console.log('✅ Categories loaded:', categories);
+        console.log('📊 Total categories:', categories.length);
+        this.categories = [...categories]; // Create new array reference for change detection
+        
+        // Update selected category name if editing
+        if (this.expense?.categoryId) {
+          const category = this.categories.find(c => c.id === this.expense!.categoryId);
+          if (category) {
+            this.selectedCategory = category;
+          }
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error loading categories:', error);
+        this.categories = [];
+      }
+    });
   }
 
   ionViewDidEnter(): void {
@@ -140,13 +164,29 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
     }, 300);
   }
 
-  async showCategoryModal() {
-    console.log('Opening category modal...');
+  onCategoryChange(categoryId: string | null): void {
+    if (categoryId) {
+      const category = this.categories.find(c => c.id === categoryId);
+      this.selectedCategory = category || null;
+      console.log('Category selected:', this.selectedCategory);
+    } else {
+      this.selectedCategory = null;
+      console.log('Category cleared');
+    }
     
+    this.expenseForm.patchValue({
+      categoryId: categoryId
+    });
+  }
+
+  async createNewCategory(): Promise<void> {
+    console.log('Opening category creation modal');
+    
+    // Open CategoryModal to create new category
     const modal = await this.modalController.create({
       component: CategoryModalComponent,
       componentProps: {
-        category: {} // Empty object for new category
+        category: {} // Empty for new category
       }
     });
     
@@ -154,24 +194,38 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
     
     const { data, role } = await modal.onWillDismiss();
     
-    console.log('Category modal dismissed with role:', role, 'data:', data);
-    
-    // If user saved a category (role is 'refresh' from CategoryModalComponent)
+    // If user created a category
     if (role === 'refresh' && data) {
-      // Set the newly created or selected category
-      this.selectedCategory = {
-        id: data.id,
-        name: data.name
-      };
+      console.log('✅ New category created:', data);
       
-      // Update form with category ID
-      this.expenseForm.patchValue({
-        categoryId: data.id
-      });
-      
-      console.log('Category selected:', this.selectedCategory);
+      // Wait for the category to be saved in the service (service has 300ms delay)
+      setTimeout(() => {
+        console.log('🔄 Reloading categories after new category creation...');
+        
+        // Reload categories to include the new one
+        this.categoryService.getAllCategories({ sort: 'name,asc' }).subscribe({
+          next: (categories) => {
+            console.log('✅ Categories reloaded after creation:', categories);
+            console.log('📊 Total categories now:', categories.length);
+            this.categories = [...categories]; // Force new array reference
+            
+            // Set the newly created category as selected
+            this.selectedCategory = data;
+            
+            // Update form with new category ID
+            this.expenseForm.patchValue({
+              categoryId: data.id
+            });
+            
+            console.log('✅ Category selection updated:', this.selectedCategory);
+            console.log('✅ Form value:', this.expenseForm.get('categoryId')?.value);
+          },
+          error: (error) => {
+            console.error('❌ Error reloading categories:', error);
+          }
+        });
+      }, 400); // Wait longer than service delay (300ms)
     }
-    // If cancelled, expense modal just continues (no action needed)
   }
 
   async cancel() {
