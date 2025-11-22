@@ -15,6 +15,7 @@ import {
   IonDatetime, 
   IonDatetimeButton, 
   IonModal,
+  IonSpinner,
   ModalController
 } from '@ionic/angular/standalone';
 import { ViewDidEnter } from '@ionic/angular';
@@ -29,9 +30,14 @@ import {
   cashOutline,
   calendarOutline
 } from 'ionicons/icons';
+import { finalize } from 'rxjs';
 
 // Import CategoryModalComponent
 import CategoryModalComponent from '../../category/category-modal/category-modal.component';
+
+// Import Services
+import { LoadingIndicatorService } from '../../shared/service/loading-indicator.service';
+import { ToastService } from '../../shared/service/toast.service';
 
 interface Category {
   id: string;
@@ -65,17 +71,21 @@ interface Expense {
     IonLabel,
     IonDatetime,
     IonDatetimeButton,
-    IonModal
+    IonModal,
+    IonSpinner
   ]
 })
 export class ExpenseModalComponent implements OnInit, ViewDidEnter {
   private modalController = inject(ModalController);
   private formBuilder = inject(FormBuilder);
+  private loadingIndicatorService = inject(LoadingIndicatorService);
+  private toastService = inject(ToastService);
   
   @Input() expense?: Expense;
   @ViewChild('nameInput') nameInput?: IonInput;
   
   selectedCategory: Category | null = null;
+  loading = false;
   
   // Form Group with validators
   expenseForm = this.formBuilder.group({
@@ -173,23 +183,40 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
     // Validate form
     if (this.expenseForm.invalid) {
       console.warn('Form is invalid:', this.getFormErrors());
-      // TODO: Show toast with validation errors
+      this.toastService.displayWarningToast('Please fill in all required fields', null as any);
       return;
     }
 
-    const formValue = this.expenseForm.value;
-    
-    // Category is optional - only include if set
-    const expenseData: Expense = {
-      id: this.expense?.id,
-      name: formValue.name!,
-      amount: formValue.amount!,
-      date: formValue.date!,
-      ...(formValue.categoryId && { categoryId: formValue.categoryId })
-    };
-    
-    console.log('Saving expense:', expenseData);
-    await this.modalController.dismiss(expenseData, 'save');
+    this.loading = true;
+    this.expenseForm.disable();
+
+    this.loadingIndicatorService
+      .showLoadingIndicator({ message: 'Saving expense' })
+      .subscribe(loadingIndicator => {
+        const formValue = this.expenseForm.value;
+        
+        // Category is optional - only include if set
+        const expenseData: Expense = {
+          id: this.expense?.id,
+          name: formValue.name!,
+          amount: formValue.amount!,
+          date: formValue.date!,
+          ...(formValue.categoryId && { categoryId: formValue.categoryId })
+        };
+        
+        console.log('Saving expense:', expenseData);
+        
+        // TODO: Replace with actual API call
+        // Simulate API delay
+        setTimeout(() => {
+          loadingIndicator.dismiss();
+          this.loading = false;
+          this.expenseForm.enable();
+          
+          this.toastService.displaySuccessToast('Expense saved');
+          this.modalController.dismiss(expenseData, 'save');
+        }, 1000);
+      });
   }
   
   private getFormErrors(): any {
