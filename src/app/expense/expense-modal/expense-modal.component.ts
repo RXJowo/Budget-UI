@@ -257,13 +257,13 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
       .subscribe(loadingIndicator => {
         const formValue = this.expenseForm.value;
         
-        // Category is optional - only include if set
+        // Always include categoryId (even if null) to allow removing categories from expenses
         const expenseData: ExpenseUpsertDto = {
           id: this.expense?.id,
           name: formValue.name!,
           amount: formValue.amount!,
           date: formValue.date!,
-          ...(formValue.categoryId && { categoryId: formValue.categoryId })
+          categoryId: formValue.categoryId ?? undefined
         };
         
         console.log('Saving expense:', expenseData);
