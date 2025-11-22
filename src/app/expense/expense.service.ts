@@ -58,6 +58,15 @@ const MOCK_EXPENSES: Expense[] = [
   },
   {
     id: '2',
+    name: 'Coffee Shop',
+    amount: 8.50,
+    date: '2024-11-20T15:30:00Z',
+    categoryId: '1',
+    createdAt: '2024-11-20T15:30:00Z',
+    lastModifiedAt: '2024-11-20T15:30:00Z',
+  },
+  {
+    id: '3',
     name: 'Gas Station',
     amount: 65.00,
     date: '2024-11-19T14:00:00Z',
@@ -66,7 +75,16 @@ const MOCK_EXPENSES: Expense[] = [
     lastModifiedAt: '2024-11-19T14:00:00Z',
   },
   {
-    id: '3',
+    id: '4',
+    name: 'Lunch',
+    amount: 22.50,
+    date: '2024-11-19T12:30:00Z',
+    categoryId: '1',
+    createdAt: '2024-11-19T12:30:00Z',
+    lastModifiedAt: '2024-11-19T12:30:00Z',
+  },
+  {
+    id: '5',
     name: 'Restaurant',
     amount: 85.00,
     date: '2024-10-15T18:00:00Z',
@@ -75,7 +93,7 @@ const MOCK_EXPENSES: Expense[] = [
     lastModifiedAt: '2024-10-15T18:00:00Z',
   },
   {
-    id: '4',
+    id: '6',
     name: 'Cinema Tickets',
     amount: 45.00,
     date: '2024-12-01T20:00:00Z',

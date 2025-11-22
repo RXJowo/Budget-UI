@@ -18,7 +18,9 @@ import {
   IonDatetimeButton, 
   IonModal,
   IonSpinner,
-  ModalController
+  IonFooter,
+  ModalController,
+  AlertController
 } from '@ionic/angular/standalone';
 import { ViewDidEnter } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -30,7 +32,8 @@ import {
   chevronDownOutline,
   addOutline,
   cashOutline,
-  calendarOutline
+  calendarOutline,
+  trashOutline
 } from 'ionicons/icons';
 import { finalize } from 'rxjs';
 
@@ -70,11 +73,13 @@ interface Expense {
     IonDatetime,
     IonDatetimeButton,
     IonModal,
-    IonSpinner
+    IonSpinner,
+    IonFooter
   ]
 })
 export class ExpenseModalComponent implements OnInit, ViewDidEnter {
   private modalController = inject(ModalController);
+  private alertController = inject(AlertController);
   private formBuilder = inject(FormBuilder);
   private loadingIndicatorService = inject(LoadingIndicatorService);
   private toastService = inject(ToastService);
@@ -106,7 +111,8 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
       chevronDownOutline,
       addOutline,
       cashOutline,
-      calendarOutline
+      calendarOutline,
+      trashOutline
     });
   }
 
@@ -135,7 +141,7 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
   }
 
   private loadCategories(): void {
-    console.log('🔄 Loading categories...');
+    console.log('📄 Loading categories...');
     this.categoryService.getAllCategories({ sort: 'name,asc' }).subscribe({
       next: (categories) => {
         console.log('✅ Categories loaded:', categories);
@@ -200,7 +206,7 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
       
       // Wait for the category to be saved in the service (service has 300ms delay)
       setTimeout(() => {
-        console.log('🔄 Reloading categories after new category creation...');
+        console.log('📄 Reloading categories after new category creation...');
         
         // Reload categories to include the new one
         this.categoryService.getAllCategories({ sort: 'name,asc' }).subscribe({
@@ -279,6 +285,67 @@ export class ExpenseModalComponent implements OnInit, ViewDidEnter {
             error: (error: any) => {
               console.error('❌ Error saving expense:', error);
               this.toastService.displayWarningToast('Could not save expense', error);
+            }
+          });
+      });
+  }
+
+  async deleteExpense() {
+    if (!this.expense?.id) {
+      console.warn('Cannot delete expense without ID');
+      return;
+    }
+
+    // Show confirmation alert
+    const alert = await this.alertController.create({
+      header: 'Delete Expense',
+      message: `Are you sure you want to delete "${this.expense.name}"?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          cssClass: 'secondary'
+        },
+        {
+          text: 'Delete',
+          role: 'destructive',
+          handler: () => {
+            this.performDelete();
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  private performDelete() {
+    if (!this.expense?.id) {
+      return;
+    }
+
+    this.loading = true;
+    this.expenseForm.disable();
+
+    this.loadingIndicatorService
+      .showLoadingIndicator({ message: 'Deleting expense' })
+      .subscribe(loadingIndicator => {
+        this.expenseService
+          .deleteExpense(this.expense!.id!)
+          .pipe(finalize(() => {
+            loadingIndicator.dismiss();
+            this.loading = false;
+            this.expenseForm.enable();
+          }))
+          .subscribe({
+            next: () => {
+              console.log('✅ Expense deleted successfully');
+              this.toastService.displaySuccessToast('Expense deleted');
+              this.modalController.dismiss(null, 'delete');
+            },
+            error: (error: any) => {
+              console.error('❌ Error deleting expense:', error);
+              this.toastService.displayWarningToast('Could not delete expense', error);
             }
           });
       });

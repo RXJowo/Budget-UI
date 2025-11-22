@@ -251,6 +251,35 @@ export default class ExpenseListComponent implements OnInit {
     return category?.name || 'Unknown category';
   }
 
+  // Group expenses by date
+  getGroupedExpenses(): { date: Date, dateString: string, expenses: Expense[] }[] {
+    if (!this.expenses || this.expenses.length === 0) {
+      return [];
+    }
+
+    // Group expenses by date (day)
+    const grouped = new Map<string, Expense[]>();
+    
+    this.expenses.forEach(expense => {
+      const expenseDate = new Date(expense.date);
+      const dateKey = expenseDate.toDateString(); // e.g., "Mon Nov 20 2024"
+      
+      if (!grouped.has(dateKey)) {
+        grouped.set(dateKey, []);
+      }
+      grouped.get(dateKey)!.push(expense);
+    });
+
+    // Convert to array and sort by date (newest first)
+    return Array.from(grouped.entries())
+      .map(([dateKey, expenses]) => ({
+        date: new Date(dateKey),
+        dateString: dateKey,
+        expenses: expenses
+      }))
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }
+
   async openExpenseModal(): Promise<void> {
     const modal = await this.modalCtrl.create({
       component: ExpenseModalComponent

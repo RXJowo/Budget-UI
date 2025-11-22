@@ -129,6 +129,22 @@
   </ion-modal>
 </ion-content>
 
+<!-- Footer with Delete Button (only when editing) -->
+@if (expense?.id) {
+  <ion-footer>
+    <ion-toolbar>
+      <ion-button 
+        expand="block" 
+        color="danger" 
+        [disabled]="loading"
+        (click)="deleteExpense()">
+        <ion-icon name="trash-outline" slot="start"></ion-icon>
+        DELETE EXPENSE
+      </ion-button>
+    </ion-toolbar>
+  </ion-footer>
+}
+
 <style>
   /* Header */
   ion-header ion-toolbar {
@@ -244,6 +260,27 @@
     padding: 6px 14px;
     font-size: 15px;
     font-weight: 400;
+  }
+
+  /* Footer */
+  ion-footer ion-toolbar {
+    --border-color: transparent;
+    --min-height: 64px;
+    padding: 8px 16px;
+  }
+
+  ion-footer ion-button {
+    margin: 0;
+    height: 48px;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  ion-footer ion-button ion-icon {
+    font-size: 20px;
+    margin-right: 8px;
   }
 
   @media (min-width: 768px) {

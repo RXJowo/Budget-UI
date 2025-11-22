@@ -82,21 +82,29 @@
             </ion-item>
           }
 
-          <!-- Expenses -->
+          <!-- Expenses Grouped by Date -->
           @default {
-            @for (expense of expenses; track expense.id) {
-              <ion-item button="true" [detail]="true" (click)="openModal(expense)">
-                <ion-label>
-                  <h2>{{ expense.name }}</h2>
-                  <p>
-                    <ion-icon name="pricetag" />
-                    {{ getCategoryName(expense.categoryId) }}
-                  </p>
-                </ion-label>
-                <div slot="end" class="amount">
-                  CHF {{ expense.amount | number:'1.2-2' }}
-                </div>
-              </ion-item>
+            @for (group of getGroupedExpenses(); track group.dateString) {
+              <!-- Date Header -->
+              <div class="date-header">
+                <h3>{{ group.date | date: 'EEEE, d. MMMM yyyy' }}</h3>
+              </div>
+              
+              <!-- Expenses for this date -->
+              @for (expense of group.expenses; track expense.id) {
+                <ion-item button="true" [detail]="true" (click)="openModal(expense)">
+                  <ion-label>
+                    <h2>{{ expense.name }}</h2>
+                    <p>
+                      <ion-icon name="pricetag" />
+                      {{ getCategoryName(expense.categoryId) }}
+                    </p>
+                  </ion-label>
+                  <div slot="end" class="amount">
+                    CHF {{ expense.amount | number:'1.2-2' }}
+                  </div>
+                </ion-item>
+              }
             }
           }
         }
@@ -148,7 +156,23 @@
     padding-left: 8px;
   }
 
+  /* Date Header */
+  .date-header {
+    padding: 16px 16px 8px 16px;
+    background: var(--ion-background-color);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
 
+  .date-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ion-color-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
 
   /* Expense List Items */
   ion-item h2 {
