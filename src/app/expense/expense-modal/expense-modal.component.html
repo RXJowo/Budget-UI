@@ -7,10 +7,14 @@
       </ion-button>
     </ion-buttons>
 
-    <ion-title>Add Expense</ion-title>
+    <ion-title>{{ expense?.id ? 'Edit' : 'Add' }} Expense</ion-title>
 
     <ion-buttons slot="end">
-      <ion-button (click)="save()" fill="clear" color="medium">
+      <ion-button 
+        [disabled]="expenseForm.invalid" 
+        (click)="save()" 
+        fill="clear" 
+        color="medium">
         <ion-icon name="save-outline" slot="start"></ion-icon>
         SAVE
       </ion-button>
@@ -18,18 +22,31 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" [formGroup]="expenseForm">
   <ion-list lines="full" class="expense-form">
 
     <!-- Name -->
     <ion-item class="form-item">
       <ion-icon name="text-outline" slot="start" class="item-icon"></ion-icon>
       <ion-input
-        [(ngModel)]="expenseName"
+        formControlName="name"
         class="item-input"
-        placeholder="Name">
+        placeholder="Name"
+        [clearInput]="true">
       </ion-input>
     </ion-item>
+    
+    <!-- Name Validation Errors -->
+    @if (expenseForm.get('name')?.touched && expenseForm.get('name')?.invalid) {
+      <div class="error-message">
+        @if (expenseForm.get('name')?.hasError('required')) {
+          Name is required
+        }
+        @if (expenseForm.get('name')?.hasError('maxlength')) {
+          Name must be less than 40 characters
+        }
+      </div>
+    }
 
     <!-- Category -->
     <ion-item button class="form-item" (click)="showCategoryModal()">
@@ -47,14 +64,27 @@
     <ion-item class="form-item">
       <ion-icon name="cash-outline" slot="start" class="item-icon"></ion-icon>
       <ion-input
-        [(ngModel)]="expenseAmount"
+        formControlName="amount"
         class="item-input"
         type="number"
         inputmode="decimal"
-        placeholder="Amount">
+        placeholder="Amount"
+        [clearInput]="true">
       </ion-input>
       <ion-label slot="end" class="currency-label">CHF</ion-label>
     </ion-item>
+    
+    <!-- Amount Validation Errors -->
+    @if (expenseForm.get('amount')?.touched && expenseForm.get('amount')?.invalid) {
+      <div class="error-message">
+        @if (expenseForm.get('amount')?.hasError('required')) {
+          Amount is required
+        }
+        @if (expenseForm.get('amount')?.hasError('min')) {
+          Amount must be greater than 0
+        }
+      </div>
+    }
 
     <!-- Date -->
     <ion-item class="form-item">
@@ -70,7 +100,7 @@
       <ion-datetime
         id="expense-date"
         presentation="date"
-        [(ngModel)]="currentDate"
+        formControlName="date"
         [showDefaultButtons]="true">
       </ion-datetime>
     </ng-template>
@@ -169,6 +199,14 @@
   .currency-label {
     font-size: 16px;
     margin: 0;
+  }
+
+  /* Validation Error Messages */
+  .error-message {
+    color: var(--ion-color-danger);
+    padding: 8px 16px;
+    font-size: 14px;
+    margin-left: 38px; /* Align with input field after icon */
   }
 
   /* Date button */
