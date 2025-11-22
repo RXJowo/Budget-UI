@@ -17,11 +17,29 @@ import {
   IonModal,
   ModalController
 } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import {
+  closeOutline,
+  saveOutline,
+  textOutline,
+  pricetagOutline,
+  chevronDownOutline,
+  addOutline,
+  cashOutline,
+  calendarOutline
+} from 'ionicons/icons';
 
 interface Category {
+  id: string;
   name: string;
-  color: string;
-  icon: string;
+}
+
+interface Expense {
+  id?: string;
+  name: string;
+  categoryId?: string;  // Optional field
+  amount: number;
+  date: string;
 }
 
 @Component({
@@ -52,9 +70,23 @@ export class ExpenseModalComponent implements OnInit {
   currentDate: string = new Date().toISOString();
   selectedCategory: Category | null = null;
   
-  // Form data
+  // Form data - required fields
   expenseName: string = '';
   expenseAmount: number | null = null;
+
+  constructor() {
+    // Register all icons
+    addIcons({
+      closeOutline,
+      saveOutline,
+      textOutline,
+      pricetagOutline,
+      chevronDownOutline,
+      addOutline,
+      cashOutline,
+      calendarOutline
+    });
+  }
 
   ngOnInit() {
     // Initialize with current date
@@ -65,9 +97,8 @@ export class ExpenseModalComponent implements OnInit {
     // TODO: Implement category selection modal
     // For now, just set a default category as an example
     this.selectedCategory = {
-      name: 'Food & Dining',
-      color: '#FF6B6B',
-      icon: 'restaurant'
+      id: '1',
+      name: 'Food & Dining'
     };
     
     console.log('Show category modal - implement category selection here');
@@ -90,18 +121,32 @@ export class ExpenseModalComponent implements OnInit {
   }
 
   async save() {
-    // Validate form data
-    if (!this.expenseName || !this.selectedCategory || !this.expenseAmount) {
-      console.warn('Please fill in all required fields');
+    // Validate required fields only: Name, Amount, Date
+    if (!this.expenseName || !this.expenseName.trim()) {
+      console.warn('Name is required');
       // TODO: Show an alert or toast for validation
       return;
     }
-    
-    const expenseData = {
-      name: this.expenseName,
-      category: this.selectedCategory,
+
+    if (!this.expenseAmount || this.expenseAmount <= 0) {
+      console.warn('Valid amount is required');
+      // TODO: Show an alert or toast for validation
+      return;
+    }
+
+    if (!this.currentDate) {
+      console.warn('Date is required');
+      // TODO: Show an alert or toast for validation
+      return;
+    }
+
+    // Category is optional
+    const expenseData: Expense = {
+      name: this.expenseName.trim(),
       amount: this.expenseAmount,
-      date: this.currentDate
+      date: this.currentDate,
+      // Only include categoryId if a category is selected
+      ...(this.selectedCategory && { categoryId: this.selectedCategory.id })
     };
     
     await this.modalController.dismiss(expenseData, 'save');

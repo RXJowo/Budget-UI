@@ -3,56 +3,111 @@
     <ion-title>Expenses</ion-title>
   </ion-toolbar>
   
-  <!-- Filter Toolbar -->
-  <ion-toolbar class="filter-toolbar">
-    <div class="filter-container">
-      <ion-button fill="clear" class="filter-button" (click)="toggleSort()">
-        <ion-icon name="swap-vertical" slot="start"></ion-icon>
-        <span>{{ sortLabel }}</span>
-        <ion-icon name="chevron-down" slot="end" class="chevron-small"></ion-icon>
-      </ion-button>
-      
-      <ion-button fill="clear" class="filter-button" (click)="toggleFilter()">
-        <ion-icon name="pricetag" slot="start"></ion-icon>
-        <span>{{ filterLabel }}</span>
-        <ion-icon name="chevron-down" slot="end" class="chevron-small"></ion-icon>
-      </ion-button>
-      
-      <ion-button fill="clear" class="search-button" (click)="openSearch()">
-        <ion-icon name="search" slot="start"></ion-icon>
-        <span>Search</span>
-      </ion-button>
-    </div>
+  <ion-toolbar>
+    @if (loading) {
+      <ion-progress-bar type="indeterminate" />
+    }
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <!-- Empty State -->
-  <div class="empty-state">
-    <ion-icon name="alert-circle-outline"></ion-icon>
-    <p>No expenses found</p>
-  </div>
+  <!-- Refresher -->
+  <ion-refresher slot="fixed" [disabled]="loading" (ionRefresh)="reloadExpenses($event)">
+    <ion-refresher-content />
+  </ion-refresher>
 
-  <!-- Expense List (will show when there are expenses) -->
-  <!-- <div class="expense-list">
-    <div class="date-group">
-      <div class="date-header">20.11.2025</div>
-      
-      <div class="expense-item">
-        <div class="expense-content">
-          <div class="expense-name">Example Expense</div>
-          <div class="expense-meta">
-            <ion-icon name="pricetag" class="category-icon"></ion-icon>
-            <span class="category-name">Category</span>
-          </div>
-        </div>
-        <div class="expense-amount">
-          <span class="amount">CHF 23.00</span>
-          <ion-icon name="chevron-forward" class="chevron"></ion-icon>
-        </div>
-      </div>
-    </div>
-  </div> -->
+  <ion-grid class="ion-padding" [formGroup]="searchForm">
+    <!-- Search & Sort & Filter -->
+    <ion-row>
+      <ion-col size="12" size-sm="4">
+        <ion-item>
+          <ion-icon name="swap-vertical" slot="start" />
+          <ion-select interface="popover" formControlName="sort">
+            @for (sortOption of sortOptions; track sortOption.label) {
+              <ion-select-option [value]="sortOption.value">
+                {{ sortOption.label }}
+              </ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+      </ion-col>
+      <ion-col size="12" size-sm="4">
+        <ion-item>
+          <ion-icon name="pricetag" slot="start" />
+          <ion-select interface="popover" formControlName="category" placeholder="Category">
+            <ion-select-option [value]="null">All Categories</ion-select-option>
+            @for (category of categories; track category.id) {
+              <ion-select-option [value]="category.id">
+                {{ category.name }}
+              </ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+      </ion-col>
+      <ion-col size="12" size-sm="4">
+        <ion-item>
+          <ion-icon name="search" slot="start" />
+          <ion-input 
+            maxlength="40" 
+            placeholder="Search" 
+            formControlName="name" 
+            [clearInput]="true" 
+          />
+        </ion-item>
+      </ion-col>
+    </ion-row>
+
+    <!-- Expense List -->
+    <ion-row>
+      <ion-col>
+        @switch (expenses?.length) {
+          <!-- Skeleton -->
+          @case (null) {
+            @for (i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; track i) {
+              <ion-item>
+                <ion-label>
+                  <ion-skeleton-text style="width: 60%" [animated]="true" />
+                  <ion-skeleton-text style="width: 40%; margin-top: 4px;" [animated]="true" />
+                </ion-label>
+                <ion-skeleton-text slot="end" style="width: 80px" [animated]="true" />
+              </ion-item>
+            }
+          }
+
+          <!-- Empty List -->
+          @case (0) {
+            <ion-item>
+              <ion-icon slot="start" name="alert-circle-outline" />
+              <ion-label> No expenses found </ion-label>
+            </ion-item>
+          }
+
+          <!-- Expenses -->
+          @default {
+            @for (expense of expenses; track expense.id) {
+              <ion-item button="true" [detail]="true" (click)="openModal(expense)">
+                <ion-label>
+                  <h2>{{ expense.name }}</h2>
+                  <p>
+                    <ion-icon name="pricetag" />
+                    {{ expense.category?.name || 'No category' }}
+                  </p>
+                </ion-label>
+                <div slot="end" class="amount">
+                  CHF {{ expense.amount | number:'1.2-2' }}
+                </div>
+              </ion-item>
+            }
+          }
+        }
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <!-- Infinite Scroll -->
+  <ion-infinite-scroll [disabled]="lastPageReached" (ionInfinite)="loadNextExpensePage($event)">
+    <ion-infinite-scroll-content />
+  </ion-infinite-scroll>
 
   <!-- FAB Button -->
   <ion-fab slot="fixed" vertical="bottom" horizontal="end">
@@ -93,143 +148,30 @@
     padding-left: 8px;
   }
 
-  /* Filter Toolbar */
-  .filter-toolbar {
-    --min-height: 52px;
-  }
-
-  .filter-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-  }
-
-  .filter-button,
-  .search-button {
-    --border-radius: 8px;
-    height: 36px;
-    font-size: 13px;
-    text-transform: none;
-    font-weight: 400;
-    padding: 0 12px;
-  }
-
-  .filter-button span,
-  .search-button span {
-    margin: 0 6px;
-  }
-
-  .filter-button ion-icon,
-  .search-button ion-icon {
-    font-size: 16px;
-  }
-
-  .chevron-small {
-    font-size: 14px;
-    margin-left: 4px;
-  }
 
 
-
-  /* Expense List */
-  .expense-list {
-    padding: 16px;
-  }
-
-  .date-group {
-    margin-bottom: 24px;
-  }
-
-  .date-header {
-    font-size: 12px;
-    font-weight: 500;
-    padding: 0 4px 8px 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  /* Expense Item */
-  .expense-item {
-    border-radius: 8px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    transition: background 0.2s ease;
-    margin-bottom: 8px;
-  }
-
-  .expense-item:hover {
-    opacity: 0.8;
-  }
-
-  .expense-item:active {
-    opacity: 0.6;
-  }
-
-  .expense-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .expense-name {
+  /* Expense List Items */
+  ion-item h2 {
     font-size: 16px;
     font-weight: 400;
-    line-height: 1.3;
+    margin: 0 0 4px 0;
   }
 
-  .expense-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .category-icon {
-    font-size: 14px;
-  }
-
-  .category-name {
+  ion-item p {
     font-size: 13px;
-  }
-
-  .expense-amount {
+    margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
+  }
+
+  ion-item p ion-icon {
+    font-size: 14px;
   }
 
   .amount {
     font-size: 15px;
     font-weight: 500;
-    white-space: nowrap;
-  }
-
-  .chevron {
-    font-size: 18px;
-  }
-
-  /* Empty State */
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: calc(100vh - 200px);
-    padding: 40px 20px;
-  }
-
-  .empty-state ion-icon {
-    font-size: 64px;
-    margin-bottom: 16px;
-  }
-
-  .empty-state p {
-    font-size: 16px;
-    margin: 0;
   }
 
   /* Footer */
